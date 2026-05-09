@@ -19,7 +19,7 @@ Inflation in many West African economies regularly exceeds 20 % annually. Access
 ```
 meridian/
 ├── apps/
-│   ├── web/          # Next.js 14 dashboard (TypeScript, Tailwind, Zustand)
+│   ├── web/          # Vite + React 18 dashboard (TypeScript, Tailwind, Zustand)
 │   └── api/          # Fastify REST API — builds Soroban txs, aggregates APY
 ├── packages/
 │   ├── stellar-sdk-helpers/  # Blend & DeFindex client wrappers
@@ -34,7 +34,7 @@ This is a **pnpm + Turborepo** monorepo. All packages are TypeScript-first with 
 
 ```
 User browser
-  └─► Next.js frontend
+  └─► Vite + React frontend
         └─► Fastify API (builds unsigned XDR)
               ├─► Blend Protocol (pool data + deposit tx)
               └─► DeFindex Protocol (vault data + deposit tx)
@@ -50,7 +50,7 @@ The API never holds private keys. It builds an unsigned Soroban transaction, ret
 
 | Layer | Technology |
 |---|---|
-| Frontend | Next.js 14, React 18, Tailwind CSS, Zustand, TanStack Query |
+| Frontend | Vite 5, React 18, Tailwind CSS, Zustand, TanStack Query |
 | Backend | Fastify, Redis (APY cache), Zod validation |
 | Blockchain | Stellar Soroban, `@stellar/stellar-sdk` v12 |
 | Protocols | Blend Capital, DeFindex |
@@ -73,7 +73,7 @@ The API never holds private keys. It builds an unsigned Soroban transaction, ret
 ### Install
 
 ```bash
-git clone https://github.com/your-org/meridian.git
+git clone https://github.com/collinsezedike/meridian.git
 cd meridian
 pnpm install
 ```
@@ -131,7 +131,7 @@ We welcome contributions — see [open issues](../../issues) for a range of task
 3. Run `pnpm lint && pnpm typecheck && pnpm test` before opening a PR
 4. Reference the relevant GitHub issue in your PR description
 
-Issues are tagged `good-first-issue`, `medium`, and `hard` — pick your level.
+Issues are tagged `good first issue`, `medium`, and `hard`, and carry the `Stellar Wave` label — pick your level.
 
 ---
 
