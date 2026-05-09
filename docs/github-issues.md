@@ -21,7 +21,7 @@ The dashboard currently uses a desktop-first layout. Many of our target users (W
 **Files to change**
 - `apps/web/src/components/dashboard/VaultList.tsx`
 - `apps/web/src/components/dashboard/PortfolioSummary.tsx`
-- `apps/web/src/pages/index.tsx`
+- `apps/web/src/App.tsx`
 
 **Acceptance criteria**
 - No horizontal scroll on 375px viewport
@@ -246,20 +246,20 @@ Add a small APY history sparkline to each `VaultCard` so users can see whether y
 
 **Description**
 
-Meridian targets West Africa — a region with both English (Nigeria, Ghana) and French (Senegal, Côte d'Ivoire) speaking users. This issue adds internationalization using `next-intl` and provides a complete French translation of the UI.
+Meridian targets West Africa — a region with both English (Nigeria, Ghana) and French (Senegal, Côte d'Ivoire) speaking users. This issue adds internationalization using `react-i18next` and provides a complete French translation of the UI.
 
 **Context**
 
 French translation quality matters for trust. Prefer human review of financial terminology (e.g., "rendement annuel" for APY, "solde" for balance) over raw machine translation.
 
 **Tasks**
-- [ ] `pnpm add next-intl` in `apps/web`
-- [ ] Set up `next-intl` middleware with locale detection (`accept-language` header, fallback `en`)
+
+- [ ] `pnpm add react-i18next i18next i18next-browser-languagedetector` in `apps/web`
+- [ ] Configure `i18next` with locale detection from `navigator.language` (fallback `en`)
 - [ ] Create `apps/web/messages/en.json` and `apps/web/messages/fr.json`
-- [ ] Replace all hardcoded UI strings with `useTranslations()` calls
-- [ ] Add a language toggle (EN / FR) to the header
+- [ ] Replace all hardcoded UI strings with `useTranslation()` calls
+- [ ] Add a language toggle (EN / FR) to the header; persist to `localStorage`
 - [ ] Verify number/currency formatting respects locale (e.g., `12.5%` vs `12,5 %`)
-- [ ] Add Playwright test asserting French strings render on `?locale=fr`
 
 **Acceptance criteria**
 - All user-facing strings translated in both locales

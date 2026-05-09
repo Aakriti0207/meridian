@@ -33,7 +33,7 @@ gh label create "hard" \
 gh label create "frontend" \
   --repo "$REPO" \
   --color "#bfd4f2" \
-  --description "Involves React components, Tailwind styling, or Vite/Next.js pages" 2>/dev/null || true
+  --description "Involves React components, Tailwind styling, or Vite components" 2>/dev/null || true
 
 gh label create "api" \
   --repo "$REPO" \
