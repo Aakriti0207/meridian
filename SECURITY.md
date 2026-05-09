@@ -6,11 +6,11 @@ Meridian is a DeFi application that routes real user funds through Soroban smart
 
 ## Supported Versions
 
-| Version | Supported |
-|---|---|
-| `main` branch | Yes |
+| Version          | Supported         |
+| ---------------- | ----------------- |
+| `main` branch    | Yes               |
 | `develop` branch | Yes (pre-release) |
-| All others | No |
+| All others       | No                |
 
 ---
 
@@ -52,7 +52,7 @@ Use **GitHub's private vulnerability reporting**:
 2. Fill in the advisory form with as much detail as possible (see below)
 3. Submit — this creates a private draft advisory visible only to you and the maintainer
 
-Alternatively, email **[collinsezedike@gmail.com](mailto:collinsezedike@gmail.com)** with the subject line `[SECURITY] Meridian — <brief description>`. Encrypt sensitive details using the maintainer's public key if available.
+Alternatively, email **[collinsezedike@gmail.com](mailto:collinsezedike@gmail.com)** with the subject line `[SECURITY] Meridian — <brief description>`.
 
 ### What to Include in Your Report
 
@@ -67,12 +67,14 @@ Alternatively, email **[collinsezedike@gmail.com](mailto:collinsezedike@gmail.co
 
 ## Response SLA
 
-| Stage | Target |
-|---|---|
-| Acknowledgement | Within **48 hours** of receipt |
-| Initial triage and severity assessment | Within **5 business days** |
-| Fix or mitigation for Critical/High | Within **14 days** where technically feasible |
-| Public disclosure | Coordinated with reporter — typically after a fix is deployed |
+| Stage                                  | Target                                        |
+| -------------------------------------- | --------------------------------------------- |
+| Acknowledgement                        | Best effort within **48 hours** — see note¹   |
+| Initial triage and severity assessment | Within **5 business days**                    |
+| Fix or mitigation for Critical/High    | Within **14 days** where technically feasible |
+| Public disclosure                      | Coordinated with reporter after fix deploys   |
+
+¹ Meridian is solo-maintained. For Critical reports, email directly in addition to the advisory to improve response time.
 
 We will keep you informed at each stage. If you do not receive an acknowledgement within 48 hours, follow up via email.
 
@@ -80,14 +82,12 @@ We will keep you informed at each stage. If you do not receive an acknowledgemen
 
 ## Severity Guidance
 
-We use the following severity levels aligned with CVSS:
-
-| Severity | Examples |
-|---|---|
-| **Critical** | Drain user funds via mainnet contract exploit; private key exposure |
-| **High** | Unauthorised transaction signing; testnet contract exploit with mainnet path |
-| **Medium** | API auth bypass without direct fund access; XSS in wallet flow |
-| **Low** | Information disclosure; minor input validation gap with no fund risk |
+| Severity     | Examples                                                        |
+| ------------ | --------------------------------------------------------------- |
+| **Critical** | Drain funds via mainnet contract exploit; private key exposure  |
+| **High**     | Unauthorised tx signing; testnet exploit with mainnet path      |
+| **Medium**   | API auth bypass without fund access; XSS in wallet flow         |
+| **Low**      | Information disclosure; input gap with no fund risk             |
 
 **On-chain contracts deployed to mainnet are always treated as Critical severity regardless of the apparent difficulty of exploitation.** Even a theoretical vulnerability in a contract holding user funds warrants immediate response.
 

@@ -21,7 +21,7 @@ assignees: ''
 ## Scope
 
 | Field | Value |
-|---|---|
+| --- | --- |
 | Area | <!-- Frontend / API / SDK / Contracts / Docs / CI --> |
 | Protocol affected | <!-- Blend / DeFindex / Both / None --> |
 | Network | <!-- testnet / mainnet / both --> |
@@ -33,11 +33,11 @@ assignees: ''
 
 ## Acceptance Criteria
 
-<!-- Define what "done" looks like. Use checkboxes. -->
+<!-- Define what "done" looks like. Replace these examples with real criteria. -->
 
-- [ ]
-- [ ]
-- [ ]
+- [ ] <!-- e.g. The vault card displays APY from the live API -->
+- [ ] <!-- e.g. Unit tests cover the happy path and error case -->
+- [ ] <!-- e.g. pnpm lint && pnpm typecheck pass with no errors -->
 
 ## Additional Context
 

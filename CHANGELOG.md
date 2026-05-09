@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Planned
+
 - Freighter wallet adapter integration
 - Live Blend Capital pool APY and TVL data
 - Live DeFindex vault APY and TVL data
@@ -17,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Unsigned Soroban deposit/withdraw transaction XDR builder
 - Soroban router contract for atomic single-transaction rebalancing
 - Yield history sparkline chart per vault
-- French/English i18n with `next-intl` and locale detection
+- French/English i18n with `react-i18next` and locale detection
 
 ---
 
@@ -26,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 #### Infrastructure
+
 - `pnpm` + Turborepo monorepo with `apps/web`, `apps/api`, `packages/shared`, `packages/stellar-sdk-helpers`, `packages/contracts`
 - `pnpm-workspace.yaml` for correct pnpm workspace resolution
 - Root `tsconfig.json` extended by all packages
@@ -36,6 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `PULL_REQUEST_TEMPLATE.md` with type-of-change checklist and protocol context fields
 
 #### Frontend (`apps/web`)
+
 - Vite + React 18 frontend (migrated from Next.js 14)
 - Tailwind CSS with PostCSS — dark theme palette
 - `WalletConnect` component (placeholder, Freighter integration pending)
@@ -46,6 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `apps/web/src/lib/api.ts` — typed `apiFetch` wrapper using `VITE_API_URL`
 
 #### API (`apps/api`)
+
 - Fastify 4 API skeleton with CORS and rate-limiting plugins
 - `GET /api/v1/vaults` — stub returning empty vault list
 - `GET /api/v1/vaults/:id` — stub returning 404
@@ -54,14 +58,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `GET /health` — liveness endpoint
 
 #### SDK (`packages/stellar-sdk-helpers`)
-- `getBlendPoolInfo(config)` — stub; decodes Blend pool APY + TVL (implementation pending #4)
-- `buildBlendDepositTx(config, depositor, amount)` — stub; builds unsigned Soroban XDR (pending #7)
-- `getDefindexVaultInfo(config)` — stub; decodes DeFindex vault APY + TVL (pending #5)
-- `buildDefindexDepositTx(config, depositor, amount)` — stub; builds unsigned Soroban XDR (pending #7)
+
+- `getBlendPoolInfo(config)` — stub; decodes Blend pool APY + TVL (implementation pending)
+- `buildBlendDepositTx(config, depositor, amount)` — stub; builds unsigned Soroban XDR (pending)
+- `getDefindexVaultInfo(config)` — stub; decodes DeFindex vault APY + TVL (pending)
+- `buildDefindexDepositTx(config, depositor, amount)` — stub; builds unsigned Soroban XDR (pending)
 - `buildHorizonServer(config)` — returns a configured `Horizon.Server`
 - `getAccountBalances(server, publicKey)` — fetches all balances for a Stellar account
 
 #### Shared (`packages/shared`)
+
 - `DepositRequestSchema` and `WithdrawRequestSchema` — Zod schemas shared by API and frontend
 - `SUPPORTED_STABLECOINS`, `PROTOCOL_IDS`, `CONTRACT_ADDRESSES`, `STELLAR_NETWORKS` constants
 - `formatUsdAmount(stroops)` — formats a bigint stroops value to a USD string
@@ -70,13 +76,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `shortenAddress(address)` — truncates a Stellar G-address for display
 
 #### Contracts (`packages/contracts`)
-- Package scaffold for Soroban Rust contracts (no Cargo.toml yet — pending #8)
+
+- Package scaffold for Soroban Rust contracts (no Cargo.toml yet — pending)
 - `scripts/deploy-testnet.sh` — placeholder deploy script for testnet
 
 ### Changed
+
 - N/A — initial release
 
 ### Fixed
+
 - N/A — initial release
 
 ---
