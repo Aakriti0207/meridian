@@ -62,16 +62,18 @@ export function PortfolioSummary() {
       <div className="mt-4 space-y-3">
         {positions.map((pos) => {
           const vault = vaults.find((v) => v.id === pos.vaultId);
+          if (!vault) {
+            console.warn(`Position references unknown vault: ${pos.vaultId}`);
+            return null;
+          }
           return (
             <div
               key={pos.vaultId}
               className="flex items-center justify-between rounded-xl border border-gray-800 bg-gray-900 px-4 py-3"
             >
               <div>
-                <p className="text-sm font-medium text-white">{pos.vaultId}</p>
-                <p className="text-xs text-gray-400">
-                  {vault ? `${vault.protocol} · ${vault.asset}` : "—"}
-                </p>
+                <p className="text-sm font-medium text-white">{vault.id}</p>
+                <p className="text-xs text-gray-400">{vault.protocol} · {vault.asset}</p>
               </div>
               <div className="text-right">
                 <p className="text-sm font-semibold text-white">{formatUsd(pos.deposited)}</p>

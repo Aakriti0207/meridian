@@ -1,4 +1,7 @@
-const API_BASE = import.meta.env.VITE_API_URL ?? "";
+const API_BASE = import.meta.env.VITE_API_URL ?? (() => {
+  if (import.meta.env.PROD) console.warn("VITE_API_URL is not set; API requests may fail in production");
+  return "";
+})();
 
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
