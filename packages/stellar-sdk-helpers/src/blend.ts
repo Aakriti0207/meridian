@@ -23,7 +23,7 @@ export async function getBlendPoolInfo(
 ): Promise<Pick<VaultInfo, "apy" | "tvl">> {
   try {
     const res = await fetch(DEFILLAMA_BLEND_USDC, {
-      signal: AbortSignal.timeout(8_000),
+      signal: AbortSignal.timeout(4_000),
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
