@@ -45,11 +45,8 @@
       inset: 0;
       pointer-events: none;
       z-index: 0;
-      background-image:
-        radial-gradient(ellipse 120% 45% at 50% 0%,   var(--bg) 0%, transparent 70%),
-        radial-gradient(ellipse 120% 45% at 50% 100%, var(--bg) 0%, transparent 70%),
-        radial-gradient(circle, rgba(255,255,255,0.13) 1px, transparent 1px);
-      background-size: 100% 100%, 100% 100%, 28px 28px;
+      background-image: radial-gradient(circle, rgba(255,255,255,0.13) 1px, transparent 1px);
+      background-size: 28px 28px;
     }
 
     body::after {
@@ -79,15 +76,13 @@
       inset: 0 0 auto;
       z-index: 100;
       padding: 20px 0;
-      transition: background 0.3s, border-color 0.3s;
-      border-bottom: 1px solid transparent;
+      transition: background 0.3s;
     }
 
     nav.stuck {
       background: rgba(7, 13, 25, 0.82);
       backdrop-filter: blur(18px);
       -webkit-backdrop-filter: blur(18px);
-      border-color: var(--border);
     }
 
     .nav-row {
@@ -120,7 +115,7 @@
     .nav-gh:hover { color: var(--text); border-color: var(--border-strong); }
 
     /* ── Hero ── */
-    .hero { padding: 72px 0 120px; overflow: hidden; }
+    .hero { padding: 120px 0 120px; overflow: hidden; }
 
     .hero-content {
       position: relative;
@@ -133,28 +128,6 @@
       z-index: 2;
     }
 
-    .hero-pill {
-      display: flex;
-      width: fit-content;
-      align-items: center;
-      gap: 8px;
-      padding: 6px 14px;
-      border-radius: 100px;
-      border: 1px solid var(--border);
-      background: var(--surface);
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--muted);
-      letter-spacing: 0.02em;
-      margin: 0 auto 32px;
-    }
-
-    .hero-pill-dot {
-      width: 6px; height: 6px;
-      border-radius: 50%;
-      background: var(--green);
-      flex-shrink: 0;
-    }
 
     h1 {
       font-size: clamp(52px, 6.5vw, 84px);
@@ -246,14 +219,6 @@
       z-index: 1;
     }
 
-    .mock-wrap::before {
-      content: '';
-      position: absolute;
-      inset: -60px;
-      background: radial-gradient(ellipse at 50% 40%, rgba(59,130,246,0.12), transparent 65%);
-      pointer-events: none;
-      z-index: 0;
-    }
 
     .mock-wrap::after {
       content: '';
@@ -380,7 +345,7 @@
     }
 
     /* ── Problem ── */
-    .problem {
+    .alt-section {
       background: var(--bg-2);
       border-top: 1px solid var(--border);
       border-bottom: 1px solid var(--border);
@@ -389,6 +354,21 @@
       --dim:   rgba(200, 225, 255, 0.28);
       color: var(--text);
     }
+
+    .light-section {
+      background-color: #dce6f7;
+      background-image: radial-gradient(circle, rgba(59,130,246,0.39) 1px, transparent 1px);
+      background-size: 28px 28px;
+      border-top: 1px solid rgba(0, 0, 0, 0.07);
+      border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+      --text:   #0d1929;
+      --muted:  rgba(13, 25, 41, 0.58);
+      --dim:    rgba(13, 25, 41, 0.36);
+      --border: rgba(0, 0, 0, 0.1);
+      --surface: rgba(0, 0, 0, 0.04);
+      color: var(--text);
+    }
+
     .problem-header { margin-bottom: 60px; }
 
     .stats {
@@ -507,15 +487,7 @@
     .step p { font-size: 14.5px; color: var(--muted); line-height: 1.65; }
 
     /* ── Protocols ── */
-    .protocols {
-      background: var(--bg-2);
-      border-top: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
-      --text:  #ddeeff;
-      --muted: rgba(200, 225, 255, 0.56);
-      --dim:   rgba(200, 225, 255, 0.28);
-      color: var(--text);
-    }
+    /* .protocols shares .alt-section */
 
     .proto-head {
       margin-bottom: 52px;
@@ -645,7 +617,12 @@
 
 
     /* ── Footer ── */
-    footer { padding: 36px 0; border-top: 1px solid var(--border); }
+    footer {
+      padding: 36px 0;
+      background: rgba(7, 13, 25, 0.82);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+    }
 
     .foot-row {
       display: flex;
@@ -679,7 +656,7 @@
     /* ── Responsive ── */
     @media (max-width: 900px) {
       .hero-copy { max-width: 100%; text-align: center; }
-      .hero-pill { margin-left: auto; margin-right: auto; }
+
       .hero-sub { max-width: 100%; margin-left: auto; margin-right: auto; }
       .waitlist-row { margin-left: auto; margin-right: auto; }
       .waitlist-success { margin-left: auto; margin-right: auto; }
@@ -705,7 +682,7 @@
     @media (max-width: 768px) {
       section { padding: 88px 0; }
       .hero   { padding: 128px 0 80px; }
-      h1 { font-size: clamp(52px, 12vw, 72px); }
+      h1 { font-size: clamp(44px, 13vw, 68px); }
       .waitlist-row { flex-direction: column; }
       .stats { grid-template-columns: 1fr; }
       .steps { grid-template-columns: 1fr; gap: 36px; }
@@ -737,10 +714,7 @@
 <!-- ── Hero ── -->
 <section class="hero">
   <div class="wrap">
-    <div class="hero-pill">
-      <span class="hero-pill-dot"></span>
-      In development &middot; Building in public
-    </div>
+
 
     <div class="hero-content">
       <!-- Copy -->
@@ -833,7 +807,7 @@
 </section>
 
 <!-- ── Problem ── -->
-<section class="problem">
+<section class="problem alt-section">
   <div class="wrap">
     <div class="problem-header">
       <h2 class="section-title">Inflation is winning.<br>Your savings are losing.</h2>
@@ -872,7 +846,7 @@
 </section>
 
 <!-- ── How it works ── -->
-<section>
+<section class="light-section">
   <div class="wrap">
     <p class="label">How it works</p>
     <h2 class="section-title">Three clicks to earning yield.</h2>
@@ -897,7 +871,7 @@
 </section>
 
 <!-- ── Protocols ── -->
-<section class="protocols">
+<section class="protocols alt-section">
   <div class="wrap">
     <div class="proto-head">
       <h2 class="section-title">Battle-tested protocols.</h2>
