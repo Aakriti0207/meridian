@@ -11,11 +11,6 @@ function formatUsd(value: number): string {
   });
 }
 
-const VAULT_NAMES: Record<string, string> = {
-  "blend-usdc": "Blend Capital",
-  "defindex-usdc": "DeFindex",
-};
-
 export function PortfolioSummary() {
   const { connected, publicKey } = useWalletStore();
   const { data: positions = [], isLoading } = usePositions(publicKey);
@@ -82,7 +77,7 @@ export function PortfolioSummary() {
               className="flex items-center justify-between rounded-lg border border-gray-800 bg-gray-900 px-3 py-3"
             >
               <div>
-                <p className="text-xs font-medium text-white">{VAULT_NAMES[vault.id] ?? vault.id}</p>
+                <p className="text-xs font-medium text-white">{vault.name}</p>
                 <p className="text-[11px] text-gray-500 mt-0.5">{vault.asset}</p>
               </div>
               <div className="text-right">
