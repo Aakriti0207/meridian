@@ -1,4 +1,4 @@
-import KNOWN_POOLS_RAW from "../../../packages/stellar-sdk-helpers/src/known-pools.json";
+import { KNOWN_POOLS } from "../../../packages/stellar-sdk-helpers/src/known-pools";
 
 type RiskLevel = "safe" | "caution" | "risky";
 
@@ -23,9 +23,6 @@ interface Pool {
   stablecoin: boolean;
   chain: string;
 }
-
-type KnownPoolMeta = Pick<ApiVault, "id" | "name" | "protocol" | "label">;
-const KNOWN_POOLS: Record<string, KnownPoolMeta> = KNOWN_POOLS_RAW satisfies Record<string, KnownPoolMeta>;
 
 function assessPoolRisk(pool: Pool): RiskLevel {
   let score = 0;

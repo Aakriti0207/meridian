@@ -1,7 +1,7 @@
 import { getStellarStablecoinPools, assessPoolRisk, type RiskLevel } from "./defilamma";
 import { getDefindexVaultInfo } from "./defindex";
 import { CONTRACT_ADDRESSES, STELLAR_NETWORKS } from "@meridian/shared";
-import KNOWN_POOLS_RAW from "./known-pools.json";
+import { KNOWN_POOLS } from "./known-pools";
 
 export interface ApiVault {
   id: string;
@@ -14,9 +14,6 @@ export interface ApiVault {
   userBalance: number;
   riskLevel: RiskLevel;
 }
-
-type KnownPoolMeta = Pick<ApiVault, "id" | "name" | "protocol" | "label">;
-const KNOWN_POOLS: Record<string, KnownPoolMeta> = KNOWN_POOLS_RAW satisfies Record<string, KnownPoolMeta>;
 
 const network = STELLAR_NETWORKS.testnet;
 const addr = CONTRACT_ADDRESSES.testnet;
