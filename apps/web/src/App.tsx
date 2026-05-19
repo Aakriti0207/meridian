@@ -16,8 +16,8 @@ function Dashboard() {
       </header>
 
       <main className="max-w-6xl mx-auto px-6 py-10">
-        <div className="flex flex-col lg:flex-row gap-8 items-start">
-          <div className="flex-1 min-w-0">
+        <div className="flex flex-col lg:flex-row gap-8 lg:items-start">
+          <div className="w-full flex-1 min-w-0">
             <VaultList />
           </div>
           <div className="w-full lg:w-72 shrink-0">
