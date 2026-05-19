@@ -15,7 +15,8 @@ export interface ApiVault {
   riskLevel: RiskLevel;
 }
 
-const KNOWN_POOLS = KNOWN_POOLS_RAW as Record<string, Pick<ApiVault, "id" | "name" | "protocol" | "label">>;
+type KnownPoolMeta = Pick<ApiVault, "id" | "name" | "protocol" | "label">;
+const KNOWN_POOLS: Record<string, KnownPoolMeta> = KNOWN_POOLS_RAW satisfies Record<string, KnownPoolMeta>;
 
 const network = STELLAR_NETWORKS.testnet;
 const addr = CONTRACT_ADDRESSES.testnet;
