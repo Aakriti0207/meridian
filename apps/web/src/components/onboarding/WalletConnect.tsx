@@ -1,9 +1,34 @@
+import { useState } from "react";
 import { useWalletStore } from "../../store/wallet";
 import { shortenAddress } from "@meridian/shared";
+import { isFreighterInstalled, connectFreighter } from "../../lib/wallet";
 
-// TODO(#issue-2): wire up Freighter / Albedo wallet adapter
+type Status = "idle" | "connecting" | "no-extension";
+
 export function WalletConnect() {
-  const { connected, publicKey, disconnect } = useWalletStore();
+  const { connected, publicKey, disconnect, connect } = useWalletStore();
+  const [status, setStatus] = useState<Status>("idle");
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleConnect() {
+    setError(null);
+
+    const installed = await isFreighterInstalled();
+    if (!installed) {
+      setStatus("no-extension");
+      return;
+    }
+
+    setStatus("connecting");
+    try {
+      const key = await connectFreighter();
+      connect(key);
+      setStatus("idle");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Connection failed");
+      setStatus("idle");
+    }
+  }
 
   if (connected && publicKey) {
     return (
@@ -19,11 +44,29 @@ export function WalletConnect() {
     );
   }
 
+  if (status === "no-extension") {
+    return (
+      <a
+        href="https://freighter.app"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-sm border border-amber-800 rounded-lg px-4 py-1.5 font-medium text-amber-400 hover:border-amber-600 hover:text-amber-300 transition-colors duration-150"
+      >
+        Install Freighter
+      </a>
+    );
+  }
+
   return (
-    <button
-      className="text-sm border border-gray-700 rounded-lg px-4 py-1.5 font-medium text-gray-300 hover:border-gray-600 hover:text-white transition-colors duration-150"
-    >
-      Connect Wallet
-    </button>
+    <div className="flex flex-col items-end gap-1">
+      <button
+        onClick={handleConnect}
+        disabled={status === "connecting"}
+        className="text-sm border border-gray-700 rounded-lg px-4 py-1.5 font-medium text-gray-300 hover:border-gray-600 hover:text-white transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {status === "connecting" ? "Connecting..." : "Connect Wallet"}
+      </button>
+      {error && <p className="text-xs text-red-400">{error}</p>}
+    </div>
   );
 }
