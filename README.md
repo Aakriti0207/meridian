@@ -16,7 +16,7 @@ Inflation in many West African economies regularly exceeds 20 % annually. Access
 
 ## Architecture
 
-```
+```text
 meridian/
 ├── apps/
 │   ├── web/          # Vite + React 18 dashboard (TypeScript, Tailwind, Zustand)
@@ -32,7 +32,7 @@ This is a **pnpm + Turborepo** monorepo. All packages are TypeScript-first with 
 
 ### Data flow
 
-```
+```text
 User browser
   └─► Vite + React frontend
         └─► Vercel Serverless Functions (builds unsigned XDR)
@@ -51,7 +51,7 @@ The API never holds private keys. It builds an unsigned Soroban transaction, ret
 ## Tech Stack
 
 | Layer | Technology |
-|---|---|
+| --- | --- |
 | Frontend | Vite 5, React 18, Tailwind CSS, Zustand, TanStack Query |
 | Backend (prod) | Vercel Serverless Functions, Zod validation |
 | Backend (local) | Fastify |
@@ -94,9 +94,9 @@ cp .env.example .env
 pnpm dev
 ```
 
-- Web: http://localhost:3000
-- API: http://localhost:3001
-- Health: http://localhost:3001/health
+- Web: <http://localhost:3000>
+- API: <http://localhost:3001>
+- Health: <http://localhost:3001/health>
 
 ### Run tests
 
