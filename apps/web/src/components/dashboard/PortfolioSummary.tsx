@@ -25,13 +25,24 @@ export function PortfolioSummary() {
         <p className="text-xs text-gray-500 mb-5 leading-relaxed">
           Connect your Freighter wallet to track positions and earned yield.
         </p>
-        <button
-          onClick={handleConnect}
-          disabled={status === "connecting"}
-          className="w-full rounded-lg border border-gray-700 bg-transparent hover:border-gray-600 hover:text-white active:scale-[0.98] text-gray-300 text-sm font-medium py-2.5 transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {status === "connecting" ? "Connecting..." : "Connect Wallet"}
-        </button>
+        {status === "no-extension" ? (
+          <a
+            href="https://freighter.app"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block w-full text-center rounded-lg border border-amber-800 bg-transparent hover:border-amber-600 text-amber-400 hover:text-amber-300 text-sm font-medium py-2.5 transition-colors duration-150"
+          >
+            Install Freighter
+          </a>
+        ) : (
+          <button
+            onClick={handleConnect}
+            disabled={status === "connecting"}
+            className="w-full rounded-lg border border-gray-700 bg-transparent hover:border-gray-600 hover:text-white active:scale-[0.98] text-gray-300 text-sm font-medium py-2.5 transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {status === "connecting" ? "Connecting..." : "Connect Wallet"}
+          </button>
+        )}
       </aside>
     );
   }
