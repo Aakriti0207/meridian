@@ -11,7 +11,7 @@ export async function isFreighterInstalled(): Promise<boolean> {
 
 export async function connectFreighter(): Promise<string> {
   const result = await requestAccess();
-  if (result.error) throw new Error(String(result.error));
+  if (result.error) throw new Error(result.error.message);
   return result.address;
 }
 
@@ -20,6 +20,6 @@ export async function signTransaction(
   networkPassphrase: string
 ): Promise<string> {
   const result = await freighterSign(xdr, { networkPassphrase });
-  if (result.error) throw new Error(String(result.error));
+  if (result.error) throw new Error(result.error.message);
   return result.signedTxXdr;
 }

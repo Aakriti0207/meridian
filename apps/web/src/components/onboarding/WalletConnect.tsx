@@ -1,34 +1,10 @@
-import { useState } from "react";
 import { useWalletStore } from "../../store/wallet";
 import { shortenAddress } from "@meridian/shared";
-import { isFreighterInstalled, connectFreighter } from "../../lib/wallet";
-
-type Status = "idle" | "connecting" | "no-extension";
+import { useWalletConnect } from "../../hooks/useWalletConnect";
 
 export function WalletConnect() {
-  const { connected, publicKey, disconnect, connect } = useWalletStore();
-  const [status, setStatus] = useState<Status>("idle");
-  const [error, setError] = useState<string | null>(null);
-
-  async function handleConnect() {
-    setError(null);
-
-    const installed = await isFreighterInstalled();
-    if (!installed) {
-      setStatus("no-extension");
-      return;
-    }
-
-    setStatus("connecting");
-    try {
-      const key = await connectFreighter();
-      connect(key);
-      setStatus("idle");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Connection failed");
-      setStatus("idle");
-    }
-  }
+  const { connected, publicKey, disconnect } = useWalletStore();
+  const { handleConnect, status, error } = useWalletConnect();
 
   if (connected && publicKey) {
     return (
