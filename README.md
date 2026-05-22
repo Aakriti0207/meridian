@@ -1,6 +1,6 @@
 # Meridian
 
-**Stablecoin yield aggregator on Stellar — built for emerging market savers.**
+**Stablecoin yield aggregator on Stellar, built for emerging market savers.**
 
 Meridian is a savings dashboard that routes USDC deposits to the highest-yielding vaults across [Blend](https://blend.capital) and [DeFindex](https://defindex.io) on the Stellar network. It targets users in West Africa and other emerging markets where dollar-denominated savings yield meaningful real returns compared to local currency alternatives.
 
@@ -10,7 +10,7 @@ Submitted to the **Drips Stellar Wave Program**.
 
 ## Why Meridian?
 
-Inflation in many West African economies regularly exceeds 20 % annually. Access to USD savings accounts is limited by KYC friction and minimum balances. Stellar's low fees (< $0.01/tx), fast finality (5s), and USDC availability make it an ideal rails layer. Meridian removes the final UX barrier — users connect a wallet, see live APY across protocols, and deposit in three clicks.
+Inflation in many West African economies regularly exceeds 20 % annually. Access to USD savings accounts is limited by KYC friction and minimum balances. Stellar's low fees (< $0.01/tx), fast finality (5s), and USDC availability make it an ideal rails layer. Meridian removes the final UX barrier: users connect a wallet, see live APY across protocols, and deposit in three clicks.
 
 ---
 
@@ -20,7 +20,7 @@ Inflation in many West African economies regularly exceeds 20 % annually. Access
 meridian/
 ├── apps/
 │   ├── web/          # Vite + React 18 dashboard (TypeScript, Tailwind, Zustand)
-│   └── api/          # Fastify REST API — builds Soroban txs, aggregates APY
+│   └── api/          # Fastify REST API (local dev): builds Soroban txs, aggregates APY
 ├── packages/
 │   ├── stellar-sdk-helpers/  # Blend & DeFindex client wrappers
 │   ├── shared/               # Zod schemas, constants, pure utils
@@ -35,12 +35,14 @@ This is a **pnpm + Turborepo** monorepo. All packages are TypeScript-first with 
 ```
 User browser
   └─► Vite + React frontend
-        └─► Fastify API (builds unsigned XDR)
+        └─► Vercel Serverless Functions (builds unsigned XDR)
               ├─► Blend Protocol (pool data + deposit tx)
               └─► DeFindex Protocol (vault data + deposit tx)
                         │
                    Stellar RPC (Soroban)
 ```
+
+In production, API routes are Vercel serverless functions (`api/v1/...`). The Fastify server in `apps/api` is used for local development only.
 
 The API never holds private keys. It builds an unsigned Soroban transaction, returns the XDR, and the frontend forwards it to the user's wallet (Freighter) for signing and submission.
 
@@ -51,7 +53,8 @@ The API never holds private keys. It builds an unsigned Soroban transaction, ret
 | Layer | Technology |
 |---|---|
 | Frontend | Vite 5, React 18, Tailwind CSS, Zustand, TanStack Query |
-| Backend | Fastify, Redis (APY cache), Zod validation |
+| Backend (prod) | Vercel Serverless Functions, Zod validation |
+| Backend (local) | Fastify |
 | Blockchain | Stellar Soroban, `@stellar/stellar-sdk` v12 |
 | Protocols | Blend Capital, DeFindex |
 | Contracts | Rust / Soroban SDK |
@@ -68,7 +71,6 @@ The API never holds private keys. It builds an unsigned Soroban transaction, ret
 - pnpm ≥ 9 (`npm i -g pnpm`)
 - Rust + `wasm32-unknown-unknown` target (for contracts)
 - Stellar CLI (`cargo install stellar-cli`)
-- Redis (for API APY caching)
 
 ### Install
 
@@ -82,7 +84,7 @@ pnpm install
 
 ```bash
 cp .env.example .env
-# Edit .env — set STELLAR_NETWORK=testnet for local dev
+# Edit .env: set STELLAR_NETWORK=testnet for local dev
 ```
 
 ### Run locally
@@ -124,14 +126,14 @@ DeFindex is a yield-strategy vault protocol on Stellar that composes multiple yi
 
 ## Contributing
 
-We welcome contributions — see [open issues](../../issues) for a range of tasks across TypeScript, Rust/Soroban, and UI.
+We welcome contributions. See [open issues](../../issues) for a range of tasks across TypeScript, Rust/Soroban, and UI.
 
 1. Fork the repo and create a feature branch: `git checkout -b feat/your-feature`
 2. Follow the existing code style (no comments unless WHY is non-obvious)
 3. Run `pnpm lint && pnpm typecheck && pnpm test` before opening a PR
 4. Reference the relevant GitHub issue in your PR description
 
-Issues are tagged `good first issue`, `medium`, and `hard`, and carry the `Stellar Wave` label — pick your level.
+Issues are tagged `good first issue`, `medium`, and `hard`, and carry the `Stellar Wave` label. Pick your level.
 
 ---
 
