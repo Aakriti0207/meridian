@@ -53,4 +53,9 @@ export const api = {
       method: "POST",
       body: JSON.stringify(body),
     }),
+  submitTx: (body: { xdr: string }) =>
+    apiFetch<{ hash: string }>("/api/v1/tx/submit", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
 };
