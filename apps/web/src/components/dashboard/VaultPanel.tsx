@@ -38,6 +38,12 @@ export function VaultPanel() {
   const [tab, setTab] = useState<Tab>("deposit");
   const [amount, setAmount] = useState("");
 
+  function onAmountKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    const allowed = ["Backspace", "Delete", "Tab", "ArrowLeft", "ArrowRight", "Home", "End", "."];
+    if (allowed.includes(e.key) || (e.key >= "0" && e.key <= "9")) return;
+    e.preventDefault();
+  }
+
   const bestVault = vaults?.reduce((best, v) => (v.apy > best.apy ? v : best), vaults[0]);
   const position = positions[0];
   const hasPosition = position && position.deposited > 0;
@@ -197,6 +203,7 @@ export function VaultPanel() {
                   placeholder="0.00"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
+                  onKeyDown={onAmountKeyDown}
                   className="flex-1 bg-transparent text-white text-xl font-semibold outline-none placeholder:text-gray-700 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
                 <span className="rounded-lg bg-gray-800 border border-gray-700 px-2.5 py-1 text-xs font-semibold text-gray-300 shrink-0">
@@ -237,6 +244,7 @@ export function VaultPanel() {
                       placeholder="0.00"
                       value={amount}
                       onChange={(e) => setAmount(e.target.value)}
+                      onKeyDown={onAmountKeyDown}
                       className="flex-1 bg-transparent text-white text-xl font-semibold outline-none placeholder:text-gray-700 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
                     <span className="rounded-lg bg-gray-800 border border-gray-700 px-2.5 py-1 text-xs font-semibold text-gray-300 shrink-0">
