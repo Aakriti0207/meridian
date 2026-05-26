@@ -103,7 +103,7 @@ export function VaultPanel() {
             ))}
           </div>
         ) : bestVault ? (
-          <div className="flex items-end justify-between">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="text-xs text-gray-500 mb-1.5">APY</p>
               <div className="flex items-baseline gap-0.5">
@@ -113,11 +113,11 @@ export function VaultPanel() {
                 <span className="text-xl font-bold text-emerald-600">%</span>
               </div>
             </div>
-            <div className="text-center pb-1">
+            <div className="pb-1 sm:text-center">
               <p className="text-xs text-gray-500 mb-1.5">TVL</p>
               <p className="text-lg font-bold text-white">{formatTvl(bestVault.tvl)}</p>
             </div>
-            <div className="text-right pb-1">
+            <div className="pb-1 sm:text-right">
               <p className="text-xs text-gray-500 mb-1.5">Route</p>
               <p className="text-lg font-bold text-white">
                 {PROTOCOL_LABEL[bestVault.protocol] ?? bestVault.protocol}
