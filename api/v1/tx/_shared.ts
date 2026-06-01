@@ -43,7 +43,7 @@ export async function buildDepositXdr(
         "deposit",
         Address.fromString(walletAddress).toScVal(),
         nativeToScVal(toStroops(amount), { type: "i128" }),
-        xdr.ScVal.scvSymbol(protocol),
+        xdr.ScVal.scvVec([xdr.ScVal.scvSymbol(protocol)]),
       )
     )
     .setTimeout(300)
