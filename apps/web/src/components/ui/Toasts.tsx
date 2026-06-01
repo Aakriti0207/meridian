@@ -22,13 +22,13 @@ export function Toasts() {
       {toasts.map((t) => (
         <div
           key={t.id}
-          className={`flex items-start gap-3 rounded-xl border px-4 py-3 text-sm shadow-lg backdrop-blur-sm animate-in fade-in slide-in-from-right-4 duration-200 ${STYLES[t.kind]}`}
+          className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-sm shadow-lg backdrop-blur-sm animate-in fade-in slide-in-from-right-4 duration-200 ${STYLES[t.kind]}`}
         >
-          <span className="font-bold mt-px shrink-0">{ICON[t.kind]}</span>
+          <span className="font-bold shrink-0">{ICON[t.kind]}</span>
           <span className="flex-1 leading-snug">{t.message}</span>
           <button
             onClick={() => dismiss(t.id)}
-            className="shrink-0 opacity-50 hover:opacity-100 transition-opacity duration-100 text-xs mt-px"
+            className="shrink-0 opacity-50 hover:opacity-100 transition-opacity duration-100 text-xs"
             aria-label="Dismiss"
           >
             ✕
