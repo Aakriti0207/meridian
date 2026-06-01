@@ -9,11 +9,8 @@ export function useWalletConnect() {
   const { connect } = useWalletStore();
   const { push } = useToastStore();
   const [status, setStatus] = useState<ConnectStatus>("idle");
-  const [error, setError] = useState<string | null>(null);
 
   async function handleConnect() {
-    setError(null);
-
     const installed = await isFreighterInstalled();
     if (!installed) {
       setStatus("no-extension");
@@ -33,11 +30,10 @@ export function useWalletConnect() {
         setStatus("idle");
         return;
       }
-      setError(message);
       push("error", message);
       setStatus("idle");
     }
   }
 
-  return { handleConnect, status, error };
+  return { handleConnect, status };
 }

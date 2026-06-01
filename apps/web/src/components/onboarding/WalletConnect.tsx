@@ -6,7 +6,7 @@ import { useWalletConnect } from "../../hooks/useWalletConnect";
 export function WalletConnect() {
   const { connected, publicKey, disconnect } = useWalletStore();
   const { push } = useToastStore();
-  const { handleConnect, status, error } = useWalletConnect();
+  const { handleConnect, status } = useWalletConnect();
 
   function handleDisconnect() {
     disconnect();
@@ -41,15 +41,12 @@ export function WalletConnect() {
   }
 
   return (
-    <div className="flex flex-col items-end gap-1">
-      <button
-        onClick={handleConnect}
-        disabled={status === "connecting"}
-        className="text-sm border border-gray-700 rounded-lg px-4 py-1.5 font-medium text-gray-300 hover:border-gray-600 hover:text-white transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {status === "connecting" ? "Connecting..." : "Connect Wallet"}
-      </button>
-      {error && <p className="text-xs text-red-400">{error}</p>}
-    </div>
+    <button
+      onClick={handleConnect}
+      disabled={status === "connecting"}
+      className="text-sm border border-gray-700 rounded-lg px-4 py-1.5 font-medium text-gray-300 hover:border-gray-600 hover:text-white transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+    >
+      {status === "connecting" ? "Connecting..." : "Connect Wallet"}
+    </button>
   );
 }

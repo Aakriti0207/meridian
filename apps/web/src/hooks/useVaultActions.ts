@@ -20,7 +20,6 @@ export function useVaultActions() {
   const { push } = useToastStore();
   const [isDepositing, setIsDepositing] = useState(false);
   const [isWithdrawing, setIsWithdrawing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [needsTrustline, setNeedsTrustline] = useState(false);
 
   const passphrase = NETWORK_PASSPHRASE[network];
@@ -36,13 +35,10 @@ export function useVaultActions() {
       const { xdr } = await api.addTrustline(publicKey);
       await signAndSubmit(xdr);
       setNeedsTrustline(false);
-      setError(null);
       push("success", "Vault assets added to wallet");
       return true;
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Failed to add vault assets";
-      setError(msg);
-      push("error", msg);
+      push("error", err instanceof Error ? err.message : "Failed to add vault assets");
       return false;
     }
   }
@@ -50,7 +46,6 @@ export function useVaultActions() {
   async function deposit(amount: string, vaultId: string): Promise<boolean> {
     if (!publicKey || !passphrase) return false;
     setIsDepositing(true);
-    setError(null);
     try {
       const { xdr } = await api.buildDeposit({ walletAddress: publicKey, vaultId, amount });
       await signAndSubmit(xdr);
@@ -62,11 +57,8 @@ export function useVaultActions() {
       const msg = err instanceof Error ? err.message : "Deposit failed";
       if (isMissingTrustline(msg)) {
         setNeedsTrustline(true);
-        setError("Your wallet is missing a required trustline. Click below to add it, then try again.");
-      } else {
-        setError(msg);
-        push("error", msg);
       }
+      push("error", msg);
       return false;
     } finally {
       setIsDepositing(false);
@@ -76,7 +68,6 @@ export function useVaultActions() {
   async function withdraw(shares: string, vaultId: string): Promise<boolean> {
     if (!publicKey || !passphrase) return false;
     setIsWithdrawing(true);
-    setError(null);
     try {
       const { xdr } = await api.buildWithdraw({ walletAddress: publicKey, vaultId, shares });
       await signAndSubmit(xdr);
@@ -84,9 +75,7 @@ export function useVaultActions() {
       push("success", `Withdrew ${shares} mUSDC`);
       return true;
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Withdrawal failed";
-      setError(msg);
-      push("error", msg);
+      push("error", err instanceof Error ? err.message : "Withdrawal failed");
       return false;
     } finally {
       setIsWithdrawing(false);
@@ -100,7 +89,6 @@ export function useVaultActions() {
     needsTrustline,
     isDepositing,
     isWithdrawing,
-    error,
-    clearError: () => { setError(null); setNeedsTrustline(false); },
+    clearNeedsTrustline: () => setNeedsTrustline(false),
   };
 }
