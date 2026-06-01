@@ -222,7 +222,7 @@ export function VaultPanel() {
                 onClick={addTrustline}
                 className="w-full rounded-xl border border-amber-800/70 bg-amber-950/20 hover:border-amber-700 text-amber-400 hover:text-amber-300 text-sm font-medium py-3 transition-colors duration-150"
               >
-                Add USDC to wallet
+                Add vault assets to wallet
               </button>
             )}
             <button
