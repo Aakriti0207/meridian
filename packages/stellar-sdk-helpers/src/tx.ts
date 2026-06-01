@@ -12,10 +12,40 @@ import {
 } from "@stellar/stellar-sdk";
 import type { StellarNetwork } from "./types";
 
-const USDC_ISSUER_TESTNET = "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5";
-const USDC_ASSET_TESTNET = new Asset("USDC", USDC_ISSUER_TESTNET);
+const USDC_ISSUER: Record<string, string> = {
+  testnet: "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
+  mainnet: "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",
+};
+
+const HORIZON_URL: Record<string, string> = {
+  testnet: "https://horizon-testnet.stellar.org",
+  mainnet: "https://horizon.stellar.org",
+};
 
 const BASE_FEE = "100";
+
+function usdcAsset(network: StellarNetwork): Asset {
+  const issuer = USDC_ISSUER[network.network];
+  if (!issuer) throw new Error(`No USDC issuer for network: ${network.network}`);
+  return new Asset("USDC", issuer);
+}
+
+function horizonServer(network: StellarNetwork): Horizon.Server {
+  return new Horizon.Server(HORIZON_URL[network.network] ?? HORIZON_URL.testnet);
+}
+
+async function assertTrustline(walletAddress: string, network: StellarNetwork): Promise<void> {
+  const issuer = USDC_ISSUER[network.network];
+  const horizon = horizonServer(network);
+  const account = await horizon.loadAccount(walletAddress);
+  const has = account.balances.some(
+    (b) =>
+      b.asset_type === "credit_alphanum4" &&
+      (b as Horizon.HorizonApi.BalanceLine<"credit_alphanum4">).asset_code === "USDC" &&
+      (b as Horizon.HorizonApi.BalanceLine<"credit_alphanum4">).asset_issuer === issuer
+  );
+  if (!has) throw new Error("USDC trustline missing — add the USDC asset to your wallet before depositing");
+}
 
 function toStroops(value: string): bigint {
   const [whole = "0", frac = ""] = value.split(".");
@@ -33,17 +63,12 @@ export async function buildAddTrustlineTx(
   walletAddress: string,
   network: StellarNetwork
 ): Promise<{ xdr: string }> {
-  const horizonUrl = network.network === "mainnet"
-    ? "https://horizon.stellar.org"
-    : "https://horizon-testnet.stellar.org";
   const passphrase = network.network === "mainnet" ? Networks.PUBLIC : Networks.TESTNET;
-  const asset = network.network === "mainnet" ? USDC_ASSET_TESTNET : USDC_ASSET_TESTNET;
-
-  const horizon = new Horizon.Server(horizonUrl);
+  const horizon = horizonServer(network);
   const account = await horizon.loadAccount(walletAddress);
 
-  const tx = new TransactionBuilder(account, { fee: "100", networkPassphrase: passphrase })
-    .addOperation(Operation.changeTrust({ asset }))
+  const tx = new TransactionBuilder(account, { fee: BASE_FEE, networkPassphrase: passphrase })
+    .addOperation(Operation.changeTrust({ asset: usdcAsset(network) }))
     .setTimeout(300)
     .build();
 
@@ -57,9 +82,10 @@ export async function buildDepositTx(
   amount: string,
   network: StellarNetwork
 ): Promise<{ xdr: string; fee: string }> {
+  await assertTrustline(walletAddress, network);
+
   const protocol = resolveProtocol(vaultId);
   const passphrase = network.network === "mainnet" ? Networks.PUBLIC : Networks.TESTNET;
-
   const server = new rpc.Server(network.rpcUrl);
   const account = await server.getAccount(walletAddress);
   const contract = new Contract(contractId);
@@ -77,7 +103,12 @@ export async function buildDepositTx(
     .build();
 
   const sim = await server.simulateTransaction(tx);
-  if (rpc.Api.isSimulationError(sim)) throw new Error(`Simulation failed: ${sim.error}`);
+  if (rpc.Api.isSimulationError(sim)) {
+    if (sim.error.includes("trustline entry is missing")) {
+      throw new Error("USDC trustline missing — add the USDC asset to your wallet before depositing");
+    }
+    throw new Error(`Simulation failed: ${sim.error}`);
+  }
 
   const prepared = rpc.assembleTransaction(tx, sim).build();
   return { xdr: prepared.toEnvelope().toXDR("base64"), fee: sim.minResourceFee };
@@ -90,7 +121,6 @@ export async function buildWithdrawTx(
   network: StellarNetwork
 ): Promise<{ xdr: string; fee: string }> {
   const passphrase = network.network === "mainnet" ? Networks.PUBLIC : Networks.TESTNET;
-
   const server = new rpc.Server(network.rpcUrl);
   const account = await server.getAccount(walletAddress);
   const contract = new Contract(contractId);
