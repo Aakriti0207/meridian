@@ -13,11 +13,13 @@ export function WalletConnect() {
 
   const handleCopy = async () => {
     if (!publicKey) return;
-    await navigator.clipboard.writeText(publicKey);
-    setCopied(true);
-    setTimeout(() => {
-      setCopied(false);
-    }, 2000);
+    try {
+      await navigator.clipboard.writeText(publicKey);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      push("error", "Failed to copy address");
+    }
   };
   
   function handleDisconnect() {
