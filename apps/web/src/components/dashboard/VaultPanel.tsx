@@ -239,12 +239,12 @@ export function VaultPanel() {
               <>
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-medium text-gray-500">Shares</span>
+                    <span className="text-xs font-medium text-gray-500">Amount</span>
                     <button
-                      onClick={() => setAmount(String(position.deposited))}
+                      onClick={() => setAmount(position.shares.toFixed(7))}
                       className="text-xs text-emerald-500 hover:text-emerald-400 transition-colors duration-150"
                     >
-                      Max: {position.deposited.toFixed(2)}
+                      Max: {position.shares.toFixed(2)}
                     </button>
                   </div>
                   <div className="flex items-center gap-3 rounded-xl border border-gray-700 bg-gray-900/70 px-4 py-3.5 focus-within:border-gray-500 transition-colors duration-150">

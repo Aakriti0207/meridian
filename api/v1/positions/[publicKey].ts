@@ -67,9 +67,10 @@ export default async function handler(req: any, res: any) {
       positions: [
         {
           vaultId: VAULT_CONTRACT_ID,
+          shares: Number(sharesBig) / 1e7,
           deposited,
-          earned: 0,
-          entryTime: 0,
+          earned: 0, // contract does not track yield per user yet
+          entryTime: 0, // contract does not record deposit timestamp yet
         },
       ],
     });

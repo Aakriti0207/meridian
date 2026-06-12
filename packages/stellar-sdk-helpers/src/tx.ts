@@ -1,4 +1,5 @@
 import {
+  Account,
   Contract,
   TransactionBuilder,
   Address,
@@ -6,6 +7,7 @@ import {
   Horizon,
   Operation,
   nativeToScVal,
+  scValToNative,
   rpc,
   xdr,
   Networks,
@@ -81,6 +83,25 @@ function resolveProtocol(vaultId: string): "Blend" | "DeFindex" {
   if (vaultId.startsWith("blend-")) return "Blend";
   if (vaultId.startsWith("defindex-")) return "DeFindex";
   throw new Error(`No protocol mapping for vault: ${vaultId}`);
+}
+
+export async function simulateView(
+  server: rpc.Server,
+  contractId: string,
+  networkPassphrase: string,
+  method: string,
+  ...args: xdr.ScVal[]
+): Promise<unknown> {
+  const dummyAccount = new Account("GAAZI4TCR3TY5OJHCTJC2A4QSY6CJWJH5IAJTGKIN2ER7LBNVKOCCWN", "0");
+  const contract = new Contract(contractId);
+  const tx = new TransactionBuilder(dummyAccount, { fee: "100", networkPassphrase })
+    .addOperation(contract.call(method, ...args))
+    .setTimeout(0)
+    .build();
+  const sim = await server.simulateTransaction(tx);
+  if (rpc.Api.isSimulationError(sim)) throw new Error(sim.error);
+  if (!rpc.Api.isSimulationSuccess(sim) || !sim.result) return null;
+  return scValToNative(sim.result.retval);
 }
 
 export async function buildAddTrustlineTx(

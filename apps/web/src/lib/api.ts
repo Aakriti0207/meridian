@@ -31,6 +31,7 @@ export interface ApiVault {
 
 export interface ApiPosition {
   vaultId: string;
+  shares: number;
   deposited: number;
   earned: number;
   entryTime: number;
@@ -56,7 +57,7 @@ export const api = {
       method: "POST",
       body: JSON.stringify(body),
     }),
-  buildWithdraw: (body: unknown) =>
+  buildWithdraw: (body: { walletAddress: string; vaultId: string; shares: string }) =>
     apiFetch<{ xdr: string }>("/api/v1/tx/withdraw", {
       method: "POST",
       body: JSON.stringify(body),
