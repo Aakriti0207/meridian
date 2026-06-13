@@ -42,7 +42,6 @@ export const api = {
     apiFetch<{ vaults: ApiVault[]; updatedAt: string; cached: boolean }>(
       "/api/v1/vaults"
     ),
-  getVault: (id: string) => apiFetch<ApiVault>(`/api/v1/vaults/${id}`),
   getPositions: (publicKey: string) =>
     apiFetch<{ positions: ApiPosition[] }>(
       `/api/v1/positions/${publicKey}`

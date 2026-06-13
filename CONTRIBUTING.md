@@ -67,7 +67,7 @@ All Wave-eligible issues are labelled `Stellar Wave`. Complexity is indicated by
 | `medium`          | Medium     | Requires understanding of one or two modules          |
 | `hard`            | Hard       | Spans multiple packages or involves Soroban contracts |
 
-All Wave-eligible issues also carry the `Stellar Wave` label. Filter by it to see the full list: [`label:Stellar Wave`](https://github.com/collinsezedike/meridian/labels/Stellar%20Wave).
+All Wave-eligible issues also carry the `Stellar Wave` label. Filter by it to see the full list: [`label:Stellar Wave`](https://github.com/drydocs/meridian/labels/Stellar%20Wave).
 
 **Before starting work**, comment on the issue to let the maintainer know you are picking it up. Do not open a PR for an issue that has not been assigned to you — Wave contributor slots are limited.
 
