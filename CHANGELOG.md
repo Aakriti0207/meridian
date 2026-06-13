@@ -9,6 +9,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- **MeridianVault: add admin safety rails.** New `set_paused`/`is_paused` emergency
+  switch halts deposits during an incident, while withdrawals stay open so a pause can
+  never trap user funds. Added `set_admin`/`get_admin` for admin key rotation without
+  redeploying. Covered by `paused_blocks_deposit`, `withdraw_works_while_paused`,
+  `unpause_re_enables_deposits`, and `set_admin_rotates_admin`.
+- **MeridianVault: fix first-depositor share inflation attack.** Share price is now
+  computed against a virtual shares/assets offset (OpenZeppelin ERC-4626 mitigation)
+  instead of the raw on-chain USDC balance, so an attacker can no longer donate USDC
+  directly to the contract to skim later depositors via rounding. Added the
+  `inflation_attack_is_unprofitable` regression test.
+
+### Tested
+
+- **Unit-test the deposit money-math.** Exported and covered `toStroops` (decimal
+  USDC → 7-decimal stroops, incl. sub-unit precision and truncation behaviour) and
+  `resolveProtocol` in `stellar-sdk-helpers` — previously untested code on the path
+  that determines on-chain deposit amounts.
+
+### Changed
+
+- **`/api/v1/vaults`: cache at the CDN edge.** Added `Cache-Control:
+  s-maxage=60, stale-while-revalidate=300` so the aggregated vault list is served
+  from Vercel's edge — cutting DeFiLlama call volume and letting the edge keep
+  serving the last good payload through a transient DeFiLlama outage instead of
+  failing the dashboard.
+
+### CI
+
+- Re-enabled the Soroban contract job (`cargo test` + wasm release build) now that
+  `packages/contracts` has a `Cargo.toml`.
+- Typecheck the Vercel serverless functions in `api/` (new `pnpm typecheck:api`).
+  They live outside the pnpm workspace and were previously never typechecked in CI.
+
 ### Planned
 
 - Freighter wallet adapter integration

@@ -15,6 +15,16 @@ const USDC: Symbol = symbol_short!("USDC");
 const MUSDC: Symbol = symbol_short!("MUSDC");
 const PROTOCOL: Symbol = symbol_short!("PROTOCOL");
 const TOTAL_SH: Symbol = symbol_short!("TOTAL_SH");
+const PAUSED: Symbol = symbol_short!("PAUSED");
+
+// Virtual shares/assets offset (OpenZeppelin ERC-4626 mitigation against the
+// first-depositor inflation attack). Share price is computed against
+// `vault_balance + OFFSET` over `total_shares + OFFSET` instead of the raw
+// on-chain balance. The virtual liquidity belongs to no one, so an attacker who
+// donates USDC directly to the contract to inflate the share price recovers only
+// ~1/OFFSET of the donation, making the skim strictly unprofitable. For honest
+// depositors the offset is negligible (1_000 stroops = 0.0001 USDC).
+const OFFSET: i128 = 1_000;
 
 // ---------------------------------------------------------------------------
 // Types
@@ -70,6 +80,7 @@ impl MeridianVault {
     /// Returns the number of mUSDC shares minted to the caller.
     pub fn deposit(env: Env, caller: Address, amount: i128, route_to: Protocol) -> i128 {
         caller.require_auth();
+        assert!(!Self::is_paused(env.clone()), "deposits paused");
         assert!(amount > 0, "amount must be positive");
 
         let usdc = Self::usdc(&env);
@@ -78,18 +89,15 @@ impl MeridianVault {
         let vault_balance = TokenClient::new(&env, &usdc)
             .balance(&env.current_contract_address());
 
-        // Share price: if no shares exist yet, 1 share = 1 stroop of USDC.
-        // Otherwise maintain the existing share price.
-        let shares_to_mint = if total_shares == 0 || vault_balance == 0 {
-            amount
-        } else {
-            // shares_to_mint = amount * total_shares / vault_balance
-            amount
-                .checked_mul(total_shares)
-                .expect("overflow")
-                .checked_div(vault_balance)
-                .expect("div zero")
-        };
+        // shares_to_mint = amount * (total_shares + OFFSET) / (vault_balance + OFFSET)
+        // The virtual offset makes the first deposit price 1 share = 1 stroop
+        // (amount * OFFSET / OFFSET == amount) while neutralising the inflation
+        // attack on every subsequent deposit.
+        let shares_to_mint = amount
+            .checked_mul(total_shares + OFFSET)
+            .expect("overflow")
+            .checked_div(vault_balance + OFFSET)
+            .expect("div zero");
 
         assert!(shares_to_mint > 0, "deposit too small");
 
@@ -134,11 +142,13 @@ impl MeridianVault {
         let caller_shares: i128 = env.storage().persistent().get(&key).unwrap_or(0);
         assert!(caller_shares >= shares, "insufficient shares");
 
-        // usdc_out = shares * vault_balance / total_shares
+        // usdc_out = shares * (vault_balance + OFFSET) / (total_shares + OFFSET)
+        // Mirrors the deposit pricing so the virtual offset cancels for honest
+        // round-trips and absorbs an attacker's donation into the virtual pool.
         let usdc_out = shares
-            .checked_mul(vault_balance)
+            .checked_mul(vault_balance + OFFSET)
             .expect("overflow")
-            .checked_div(total_shares)
+            .checked_div(total_shares + OFFSET)
             .expect("div zero");
 
         assert!(usdc_out > 0, "withdrawal too small");
@@ -186,8 +196,42 @@ impl MeridianVault {
     }
 
     // -----------------------------------------------------------------------
+    // Admin / safety rails
+    // -----------------------------------------------------------------------
+
+    /// Admin-only emergency switch. While paused, new deposits are rejected.
+    /// Withdrawals are deliberately left open so a pause can never trap user
+    /// funds — the worst the admin can do is stop new money coming in.
+    pub fn set_paused(env: Env, paused: bool) {
+        Self::require_admin(&env);
+        env.storage().instance().set(&PAUSED, &paused);
+    }
+
+    /// Returns whether deposits are currently paused.
+    pub fn is_paused(env: Env) -> bool {
+        env.storage().instance().get(&PAUSED).unwrap_or(false)
+    }
+
+    /// Admin-only key rotation. Lets a compromised or retired admin key be
+    /// replaced without redeploying the vault.
+    pub fn set_admin(env: Env, new_admin: Address) {
+        Self::require_admin(&env);
+        env.storage().instance().set(&ADMIN, &new_admin);
+    }
+
+    /// Returns the current admin address.
+    pub fn get_admin(env: Env) -> Address {
+        env.storage().instance().get(&ADMIN).unwrap()
+    }
+
+    // -----------------------------------------------------------------------
     // Helpers
     // -----------------------------------------------------------------------
+
+    fn require_admin(env: &Env) {
+        let admin: Address = env.storage().instance().get(&ADMIN).unwrap();
+        admin.require_auth();
+    }
 
     fn usdc(env: &Env) -> Address {
         env.storage().instance().get(&USDC).unwrap()
@@ -298,6 +342,84 @@ mod tests {
         let shares1 = vault.get_position(&user);
         let usdc_out = vault.withdraw(&user, &shares1);
         assert!(usdc_out > amount, "first depositor should profit from yield");
+    }
+
+    #[test]
+    fn inflation_attack_is_unprofitable() {
+        let (env, _admin, attacker, usdc_id, _musdc, vault) = setup();
+        let usdc = TokenClient::new(&env, &usdc_id);
+
+        // 1. Attacker is the first depositor with the smallest possible amount.
+        let attacker_deposit = 1_i128;
+        let attacker_shares = vault.deposit(&attacker, &attacker_deposit, &Protocol::Blend);
+        assert_eq!(attacker_shares, 1);
+
+        // 2. Attacker donates USDC straight to the vault to inflate the share
+        //    price before the victim deposits (the classic inflation attack).
+        let donation = 100_0000000_i128; // 100 USDC
+        usdc.transfer(&attacker, &vault.address, &donation);
+
+        // 3. Victim deposits 100 USDC.
+        let victim = Address::generate(&env);
+        let victim_deposit = 100_0000000_i128;
+        StellarAssetClient::new(&env, &usdc_id).mint(&victim, &victim_deposit);
+        let victim_shares = vault.deposit(&victim, &victim_deposit, &Protocol::Blend);
+        assert!(victim_shares > 0, "victim must receive shares");
+
+        // 4. Attacker withdraws their single share to skim the victim.
+        let attacker_out = vault.withdraw(&attacker, &attacker_shares);
+
+        // The virtual offset absorbs the donation: the attacker recovers a
+        // negligible fraction of the capital they committed, so the attack loses
+        // money instead of profiting.
+        let attacker_in = attacker_deposit + donation;
+        assert!(attacker_out * 100 < attacker_in, "inflation attack must not be profitable");
+
+        // The victim is made whole — they recover essentially their full deposit.
+        let victim_out = vault.withdraw(&victim, &victim_shares);
+        assert!(victim_out > victim_deposit * 99 / 100, "victim must not be robbed");
+    }
+
+    #[test]
+    #[should_panic(expected = "deposits paused")]
+    fn paused_blocks_deposit() {
+        let (_env, _admin, user, _usdc, _musdc, vault) = setup();
+        vault.set_paused(&true);
+        vault.deposit(&user, &100_0000000_i128, &Protocol::Blend);
+    }
+
+    #[test]
+    fn withdraw_works_while_paused() {
+        let (_env, _admin, user, _usdc, _musdc, vault) = setup();
+        let amount = 100_0000000_i128;
+        vault.deposit(&user, &amount, &Protocol::Blend);
+
+        // Pausing must never trap funds: an existing depositor can still exit.
+        vault.set_paused(&true);
+        let shares = vault.get_position(&user);
+        let out = vault.withdraw(&user, &shares);
+        assert_eq!(out, amount);
+    }
+
+    #[test]
+    fn unpause_re_enables_deposits() {
+        let (_env, _admin, user, _usdc, _musdc, vault) = setup();
+        vault.set_paused(&true);
+        vault.set_paused(&false);
+        assert!(!vault.is_paused());
+
+        let shares = vault.deposit(&user, &100_0000000_i128, &Protocol::Blend);
+        assert_eq!(shares, 100_0000000_i128);
+    }
+
+    #[test]
+    fn set_admin_rotates_admin() {
+        let (env, admin, _user, _usdc, _musdc, vault) = setup();
+        assert_eq!(vault.get_admin(), admin);
+
+        let new_admin = Address::generate(&env);
+        vault.set_admin(&new_admin);
+        assert_eq!(vault.get_admin(), new_admin);
     }
 
     #[test]
