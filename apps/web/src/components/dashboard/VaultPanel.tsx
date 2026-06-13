@@ -263,7 +263,7 @@ export function VaultPanel() {
                     </span>
                   </div>
                 </div>
-                    <button
+                <button
                   onClick={handleWithdraw}
                   disabled={!amount || !bestVault || isWithdrawing}
                   className="w-full rounded-xl border border-gray-700 bg-gray-900/50 hover:border-gray-500 hover:bg-gray-900 hover:text-white text-gray-300 text-sm font-semibold py-3.5 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"

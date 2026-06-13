@@ -12,7 +12,7 @@ export default defineConfig({
       { text: "Architecture", link: "/architecture/monorepo" },
       { text: "Operations", link: "/operations/local-development" },
       { text: "App", link: "https://meridian-web.vercel.app/app/" },
-      { text: "GitHub", link: "https://github.com/collinsezedike/meridian" },
+      { text: "GitHub", link: "https://github.com/drydocs/meridian" },
     ],
     sidebar: [
       {
@@ -43,7 +43,7 @@ export default defineConfig({
       },
     ],
     socialLinks: [
-      { icon: "github", link: "https://github.com/collinsezedike/meridian" },
+      { icon: "github", link: "https://github.com/drydocs/meridian" },
     ],
     footer: {
       message: "Open source on Stellar.",

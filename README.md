@@ -75,7 +75,7 @@ The API never holds private keys. It builds an unsigned Soroban transaction, ret
 ### Install
 
 ```bash
-git clone https://github.com/collinsezedike/meridian.git
+git clone https://github.com/drydocs/meridian.git
 cd meridian
 pnpm install
 ```

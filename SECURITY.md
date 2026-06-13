@@ -48,11 +48,11 @@ The following are explicitly out of scope:
 
 Use **GitHub's private vulnerability reporting**:
 
-1. Go to [https://github.com/collinsezedike/meridian/security/advisories/new](https://github.com/collinsezedike/meridian/security/advisories/new)
+1. Go to [https://github.com/drydocs/meridian/security/advisories/new](https://github.com/drydocs/meridian/security/advisories/new)
 2. Fill in the advisory form with as much detail as possible (see below)
 3. Submit — this creates a private draft advisory visible only to you and the maintainer
 
-Alternatively, open a thread in [GitHub Discussions](https://github.com/collinsezedike/meridian/discussions) with the subject line `[SECURITY] Meridian — <brief description>`.
+Alternatively, open a thread in [GitHub Discussions](https://github.com/drydocs/meridian/discussions) with the subject line `[SECURITY] Meridian — <brief description>`.
 
 ### What to Include in Your Report
 

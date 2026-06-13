@@ -11,7 +11,7 @@ hero:
       link: /overview/introduction
     - theme: alt
       text: View on GitHub
-      link: https://github.com/collinsezedike/meridian
+      link: https://github.com/drydocs/meridian
 
 features:
   - title: Single vault

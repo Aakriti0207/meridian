@@ -57,10 +57,10 @@ async function assertTrustlines(walletAddress: string): Promise<void> {
   const balances = account.balances;
 
   if (!hasTrustlineInBalances(balances, "USDC", USDC_ISSUER)) {
-    throw new Error("Trustline missing — add the vault assets to your wallet before depositing");
+    throw new Error("USDC trustline missing. Add vault assets to your wallet before depositing.");
   }
   if (!hasTrustlineInBalances(balances, "MUSDC", MUSDC_ISSUER)) {
-    throw new Error("Trustline missing — add the vault assets to your wallet before depositing");
+    throw new Error("mUSDC trustline missing. Add vault assets to your wallet before depositing.");
   }
 }
 

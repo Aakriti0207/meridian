@@ -9,7 +9,7 @@ export function WalletConnect() {
   const { connected, publicKey, disconnect } = useWalletStore();
   const { push } = useToastStore();
   const { handleConnect, status } = useWalletConnect();
-  const [copied, setCopied] = useState(false); 
+  const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
     if (!publicKey) return;

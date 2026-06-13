@@ -11,5 +11,5 @@ export async function buildBlendDepositTx(
   _depositor: string,
   _amount: bigint
 ) {
-  throw new Error("Not implemented — see issue #4");
+  throw new Error("Not implemented. See issue #4.");
 }

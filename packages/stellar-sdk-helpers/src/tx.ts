@@ -66,10 +66,10 @@ async function assertTrustlines(walletAddress: string, network: StellarNetwork):
   const account = await horizon.loadAccount(walletAddress);
 
   if (!hasAssetTrustline(account.balances, "USDC", USDC_ISSUER[network.network] ?? "")) {
-    throw new Error("USDC trustline missing — add the vault assets to your wallet before depositing");
+    throw new Error("USDC trustline missing. Add vault assets to your wallet before depositing.");
   }
   if (MUSDC_ISSUER[network.network] && !hasAssetTrustline(account.balances, "MUSDC", MUSDC_ISSUER[network.network])) {
-    throw new Error("mUSDC trustline missing — add the vault assets to your wallet before depositing");
+    throw new Error("mUSDC trustline missing. Add vault assets to your wallet before depositing.");
   }
 }
 

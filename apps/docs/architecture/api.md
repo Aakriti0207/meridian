@@ -50,6 +50,7 @@ Returns the user's on-chain position.
   "positions": [
     {
       "vaultId": "blend-usdc-variable",
+      "shares": 100.0,
       "deposited": 100.00,
       "earned": 2.34,
       "entryTime": 1716729600
@@ -58,7 +59,7 @@ Returns the user's on-chain position.
 }
 ```
 
-Currently returns an empty array pending on-chain position indexing (issue #6).
+Reads position data directly from the vault contract via `simulateTransaction`. Returns an empty array if the wallet holds no shares.
 
 ### `POST /api/v1/tx/deposit`
 

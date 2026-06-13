@@ -14,7 +14,7 @@ The Rust toolchain and Stellar CLI are only required if you are working on the S
 ## Setup
 
 ```bash
-git clone https://github.com/collinsezedike/meridian.git
+git clone https://github.com/drydocs/meridian.git
 cd meridian
 pnpm install
 ```
