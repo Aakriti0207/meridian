@@ -22,10 +22,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   directly to the contract to skim later depositors via rounding. Added the
   `inflation_attack_is_unprofitable` regression test.
 
+### Changed
+
+- **`/api/v1/vaults`: cache at the CDN edge.** Added `Cache-Control:
+  s-maxage=60, stale-while-revalidate=300` so the aggregated vault list is served
+  from Vercel's edge — cutting DeFiLlama call volume and letting the edge keep
+  serving the last good payload through a transient DeFiLlama outage instead of
+  failing the dashboard.
+
 ### CI
 
 - Re-enabled the Soroban contract job (`cargo test` + wasm release build) now that
   `packages/contracts` has a `Cargo.toml`.
+- Typecheck the Vercel serverless functions in `api/` (new `pnpm typecheck:api`).
+  They live outside the pnpm workspace and were previously never typechecked in CI.
 
 ### Planned
 

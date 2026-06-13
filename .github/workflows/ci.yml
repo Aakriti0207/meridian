@@ -20,6 +20,9 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
       - run: pnpm typecheck
+      # The Vercel serverless functions in api/ live outside the pnpm workspace,
+      # so turbo doesn't cover them — typecheck them explicitly.
+      - run: pnpm typecheck:api
 
   test:
     name: Test
