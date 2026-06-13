@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 
+- **MeridianVault: add admin safety rails.** New `set_paused`/`is_paused` emergency
+  switch halts deposits during an incident, while withdrawals stay open so a pause can
+  never trap user funds. Added `set_admin`/`get_admin` for admin key rotation without
+  redeploying. Covered by `paused_blocks_deposit`, `withdraw_works_while_paused`,
+  `unpause_re_enables_deposits`, and `set_admin_rotates_admin`.
 - **MeridianVault: fix first-depositor share inflation attack.** Share price is now
   computed against a virtual shares/assets offset (OpenZeppelin ERC-4626 mitigation)
   instead of the raw on-chain USDC balance, so an attacker can no longer donate USDC

@@ -15,6 +15,7 @@ const USDC: Symbol = symbol_short!("USDC");
 const MUSDC: Symbol = symbol_short!("MUSDC");
 const PROTOCOL: Symbol = symbol_short!("PROTOCOL");
 const TOTAL_SH: Symbol = symbol_short!("TOTAL_SH");
+const PAUSED: Symbol = symbol_short!("PAUSED");
 
 // Virtual shares/assets offset (OpenZeppelin ERC-4626 mitigation against the
 // first-depositor inflation attack). Share price is computed against
@@ -79,6 +80,7 @@ impl MeridianVault {
     /// Returns the number of mUSDC shares minted to the caller.
     pub fn deposit(env: Env, caller: Address, amount: i128, route_to: Protocol) -> i128 {
         caller.require_auth();
+        assert!(!Self::is_paused(env.clone()), "deposits paused");
         assert!(amount > 0, "amount must be positive");
 
         let usdc = Self::usdc(&env);
@@ -194,8 +196,42 @@ impl MeridianVault {
     }
 
     // -----------------------------------------------------------------------
+    // Admin / safety rails
+    // -----------------------------------------------------------------------
+
+    /// Admin-only emergency switch. While paused, new deposits are rejected.
+    /// Withdrawals are deliberately left open so a pause can never trap user
+    /// funds — the worst the admin can do is stop new money coming in.
+    pub fn set_paused(env: Env, paused: bool) {
+        Self::require_admin(&env);
+        env.storage().instance().set(&PAUSED, &paused);
+    }
+
+    /// Returns whether deposits are currently paused.
+    pub fn is_paused(env: Env) -> bool {
+        env.storage().instance().get(&PAUSED).unwrap_or(false)
+    }
+
+    /// Admin-only key rotation. Lets a compromised or retired admin key be
+    /// replaced without redeploying the vault.
+    pub fn set_admin(env: Env, new_admin: Address) {
+        Self::require_admin(&env);
+        env.storage().instance().set(&ADMIN, &new_admin);
+    }
+
+    /// Returns the current admin address.
+    pub fn get_admin(env: Env) -> Address {
+        env.storage().instance().get(&ADMIN).unwrap()
+    }
+
+    // -----------------------------------------------------------------------
     // Helpers
     // -----------------------------------------------------------------------
+
+    fn require_admin(env: &Env) {
+        let admin: Address = env.storage().instance().get(&ADMIN).unwrap();
+        admin.require_auth();
+    }
 
     fn usdc(env: &Env) -> Address {
         env.storage().instance().get(&USDC).unwrap()
@@ -342,6 +378,48 @@ mod tests {
         // The victim is made whole — they recover essentially their full deposit.
         let victim_out = vault.withdraw(&victim, &victim_shares);
         assert!(victim_out > victim_deposit * 99 / 100, "victim must not be robbed");
+    }
+
+    #[test]
+    #[should_panic(expected = "deposits paused")]
+    fn paused_blocks_deposit() {
+        let (_env, _admin, user, _usdc, _musdc, vault) = setup();
+        vault.set_paused(&true);
+        vault.deposit(&user, &100_0000000_i128, &Protocol::Blend);
+    }
+
+    #[test]
+    fn withdraw_works_while_paused() {
+        let (_env, _admin, user, _usdc, _musdc, vault) = setup();
+        let amount = 100_0000000_i128;
+        vault.deposit(&user, &amount, &Protocol::Blend);
+
+        // Pausing must never trap funds: an existing depositor can still exit.
+        vault.set_paused(&true);
+        let shares = vault.get_position(&user);
+        let out = vault.withdraw(&user, &shares);
+        assert_eq!(out, amount);
+    }
+
+    #[test]
+    fn unpause_re_enables_deposits() {
+        let (_env, _admin, user, _usdc, _musdc, vault) = setup();
+        vault.set_paused(&true);
+        vault.set_paused(&false);
+        assert!(!vault.is_paused());
+
+        let shares = vault.deposit(&user, &100_0000000_i128, &Protocol::Blend);
+        assert_eq!(shares, 100_0000000_i128);
+    }
+
+    #[test]
+    fn set_admin_rotates_admin() {
+        let (env, admin, _user, _usdc, _musdc, vault) = setup();
+        assert_eq!(vault.get_admin(), admin);
+
+        let new_admin = Address::generate(&env);
+        vault.set_admin(&new_admin);
+        assert_eq!(vault.get_admin(), new_admin);
     }
 
     #[test]
