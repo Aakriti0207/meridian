@@ -73,13 +73,13 @@ async function assertTrustlines(walletAddress: string, network: StellarNetwork):
   }
 }
 
-function toStroops(value: string): bigint {
+export function toStroops(value: string): bigint {
   const [whole = "0", frac = ""] = value.split(".");
   const fracPadded = frac.padEnd(7, "0").slice(0, 7);
   return BigInt(whole) * 10_000_000n + BigInt(fracPadded);
 }
 
-function resolveProtocol(vaultId: string): "Blend" | "DeFindex" {
+export function resolveProtocol(vaultId: string): "Blend" | "DeFindex" {
   if (vaultId.startsWith("blend-")) return "Blend";
   if (vaultId.startsWith("defindex-")) return "DeFindex";
   throw new Error(`No protocol mapping for vault: ${vaultId}`);

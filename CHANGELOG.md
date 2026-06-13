@@ -22,6 +22,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   directly to the contract to skim later depositors via rounding. Added the
   `inflation_attack_is_unprofitable` regression test.
 
+### Tested
+
+- **Unit-test the deposit money-math.** Exported and covered `toStroops` (decimal
+  USDC → 7-decimal stroops, incl. sub-unit precision and truncation behaviour) and
+  `resolveProtocol` in `stellar-sdk-helpers` — previously untested code on the path
+  that determines on-chain deposit amounts.
+
 ### Changed
 
 - **`/api/v1/vaults`: cache at the CDN edge.** Added `Cache-Control:
