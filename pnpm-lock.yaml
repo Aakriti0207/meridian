@@ -178,6 +178,10 @@ importers:
       zod:
         specifier: ^3.23.0
         version: 3.25.76
+    devDependencies:
+      vitest:
+        specifier: ^4.1.8
+        version: 4.1.8(@types/node@20.19.39)(vite@8.0.16(@types/node@20.19.39)(esbuild@0.28.0)(jiti@1.21.7)(tsx@4.22.1))
 
 packages:
 
