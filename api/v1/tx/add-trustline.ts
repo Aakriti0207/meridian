@@ -1,4 +1,7 @@
-import { buildTrustlineXdr } from "./_shared";
+import { buildAddTrustlineTx } from "@meridian/stellar-sdk-helpers";
+import { STELLAR_NETWORKS } from "@meridian/shared";
+
+const network = STELLAR_NETWORKS.testnet;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default async function handler(req: any, res: any) {
@@ -8,7 +11,7 @@ export default async function handler(req: any, res: any) {
   if (!walletAddress) return res.status(400).json({ error: "Missing required field: walletAddress" });
 
   try {
-    const result = await buildTrustlineXdr(walletAddress);
+    const result = await buildAddTrustlineTx(walletAddress, network);
     res.json(result);
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Failed to build trustline transaction";

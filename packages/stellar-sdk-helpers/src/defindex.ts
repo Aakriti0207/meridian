@@ -1,21 +1,8 @@
-import type { VaultInfo, StellarNetwork } from "./types";
+import type { StellarNetwork } from "./types";
 
 export interface DefindexVaultConfig {
   contractId: string;
   network: StellarNetwork;
-}
-
-// DeFindex testnet vault. Returns estimated figures until a live vault address
-// is deployed and wired into CONTRACT_ADDRESSES.
-const TESTNET_ESTIMATE: Pick<VaultInfo, "apy" | "tvl"> = {
-  apy: 9.2,
-  tvl: 85_000,
-};
-
-export async function getDefindexVaultInfo(
-  _config: DefindexVaultConfig
-): Promise<Pick<VaultInfo, "apy" | "tvl">> {
-  return TESTNET_ESTIMATE;
 }
 
 export async function buildDefindexDepositTx(

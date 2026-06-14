@@ -42,6 +42,10 @@ pub enum Protocol {
 pub enum DataKey {
     Balance(Address),
     Entry(Address),
+    // Cost basis: net USDC an address has deposited. Used to derive yield earned
+    // (current share value − principal). Reduced proportionally on withdrawal and
+    // cleared on a full exit.
+    Principal(Address),
 }
 
 // ---------------------------------------------------------------------------
@@ -129,6 +133,12 @@ impl MeridianVault {
             env.storage().persistent().set(&entry_key, &env.ledger().timestamp());
         }
 
+        // Accumulate the caller's cost basis. Yield earned is later derived as
+        // current share value − principal, so a top-up adds to the basis.
+        let principal_key = DataKey::Principal(caller.clone());
+        let prev_principal: i128 = env.storage().persistent().get(&principal_key).unwrap_or(0);
+        env.storage().persistent().set(&principal_key, &(prev_principal + amount));
+
         shares_to_mint
     }
 
@@ -175,9 +185,25 @@ impl MeridianVault {
         let remaining = caller_shares - shares;
         env.storage().persistent().set(&key, &remaining);
 
-        // A full exit clears the entry time so a later re-deposit starts fresh.
+        // Retire cost basis in proportion to the shares burned, so the remaining
+        // principal still reflects what the leftover position cost. Integer
+        // division can leave dust, which the full-exit branch below zeroes out.
+        let principal_key = DataKey::Principal(caller.clone());
+        let principal: i128 = env.storage().persistent().get(&principal_key).unwrap_or(0);
+        let principal_out = principal
+            .checked_mul(shares)
+            .expect("overflow")
+            .checked_div(caller_shares)
+            .expect("div zero");
+        env.storage()
+            .persistent()
+            .set(&principal_key, &(principal - principal_out));
+
+        // A full exit clears the entry time and cost basis so a later re-deposit
+        // starts fresh.
         if remaining == 0 {
             env.storage().persistent().remove(&DataKey::Entry(caller.clone()));
+            env.storage().persistent().remove(&principal_key);
         }
 
         usdc_out
@@ -193,6 +219,13 @@ impl MeridianVault {
     /// holds no position. Reset whenever the position is fully withdrawn.
     pub fn get_entry_time(env: Env, address: Address) -> u64 {
         let key = DataKey::Entry(address);
+        env.storage().persistent().get(&key).unwrap_or(0)
+    }
+
+    /// Returns the address's cost basis: the net USDC it has deposited and not
+    /// yet withdrawn. Yield earned is current share value − this value.
+    pub fn get_principal(env: Env, address: Address) -> i128 {
+        let key = DataKey::Principal(address);
         env.storage().persistent().get(&key).unwrap_or(0)
     }
 
@@ -332,6 +365,65 @@ mod tests {
         // User should have their USDC back.
         let user_balance = TokenClient::new(&env, &usdc_id).balance(&user);
         assert_eq!(user_balance, 1_000_0000000_i128);
+    }
+
+    #[test]
+    fn deposit_records_principal() {
+        let (_env, _admin, user, _usdc, _musdc, vault) = setup();
+        assert_eq!(vault.get_principal(&user), 0);
+
+        let amount = 100_0000000_i128;
+        vault.deposit(&user, &amount, &Protocol::Blend);
+        assert_eq!(vault.get_principal(&user), amount);
+    }
+
+    #[test]
+    fn topup_accumulates_principal() {
+        let (_env, _admin, user, _usdc, _musdc, vault) = setup();
+        vault.deposit(&user, &100_0000000_i128, &Protocol::Blend);
+        vault.deposit(&user, &50_0000000_i128, &Protocol::Blend);
+        assert_eq!(vault.get_principal(&user), 150_0000000_i128);
+    }
+
+    #[test]
+    fn partial_withdraw_reduces_principal_proportionally() {
+        let (_env, _admin, user, _usdc, _musdc, vault) = setup();
+        let amount = 100_0000000_i128;
+        vault.deposit(&user, &amount, &Protocol::Blend);
+
+        // Burn half the shares — half the cost basis should be retired.
+        let half = vault.get_position(&user) / 2;
+        vault.withdraw(&user, &half);
+        assert_eq!(vault.get_principal(&user), 50_0000000_i128);
+    }
+
+    #[test]
+    fn full_withdraw_clears_principal() {
+        let (_env, _admin, user, _usdc, _musdc, vault) = setup();
+        vault.deposit(&user, &100_0000000_i128, &Protocol::Blend);
+
+        let shares = vault.get_position(&user);
+        vault.withdraw(&user, &shares);
+        assert_eq!(vault.get_principal(&user), 0);
+    }
+
+    #[test]
+    fn share_value_exceeds_principal_after_yield() {
+        let (env, _admin, user, usdc_id, _musdc, vault) = setup();
+
+        let amount = 100_0000000_i128;
+        vault.deposit(&user, &amount, &Protocol::Blend);
+
+        // Accrue 10 USDC of yield into the vault.
+        StellarAssetClient::new(&env, &usdc_id).mint(&vault.address, &10_0000000_i128);
+
+        // The off-chain `earned` figure is current share value − principal. Here
+        // the single depositor owns the whole pool, so their share value is the
+        // full vault balance (110 USDC), which exceeds their 100 USDC basis.
+        let shares = vault.get_position(&user);
+        let share_value = shares * vault.get_total_assets() / vault.get_total_shares();
+        assert!(share_value > vault.get_principal(&user));
+        assert_eq!(share_value - vault.get_principal(&user), 10_0000000_i128);
     }
 
     #[test]

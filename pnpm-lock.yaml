@@ -31,6 +31,22 @@ importers:
         specifier: ^5.4.0
         version: 5.9.3
 
+  api:
+    dependencies:
+      '@meridian/shared':
+        specifier: workspace:*
+        version: link:../packages/shared
+      '@meridian/stellar-sdk-helpers':
+        specifier: workspace:*
+        version: link:../packages/stellar-sdk-helpers
+      '@stellar/stellar-sdk':
+        specifier: ^12.0.0
+        version: 12.3.0
+    devDependencies:
+      vitest:
+        specifier: ^4.1.8
+        version: 4.1.8(@types/node@20.19.39)(vite@8.0.16(@types/node@20.19.39)(esbuild@0.28.0)(jiti@1.21.7)(tsx@4.22.1))
+
   apps/api:
     dependencies:
       '@fastify/cors':

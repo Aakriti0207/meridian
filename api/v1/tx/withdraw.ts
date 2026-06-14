@@ -1,4 +1,8 @@
-import { buildWithdrawXdr } from "./_shared";
+import { buildWithdrawTx } from "@meridian/stellar-sdk-helpers";
+import { CONTRACT_ADDRESSES, STELLAR_NETWORKS } from "@meridian/shared";
+
+const network = STELLAR_NETWORKS.testnet;
+const vaultContractId = process.env.VAULT_CONTRACT_ID ?? CONTRACT_ADDRESSES.testnet.vault;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default async function handler(req: any, res: any) {
@@ -13,7 +17,7 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
-    const result = await buildWithdrawXdr(walletAddress, shares);
+    const result = await buildWithdrawTx(vaultContractId, walletAddress, shares, network);
     res.json(result);
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Failed to build withdraw transaction";

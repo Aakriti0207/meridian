@@ -1,4 +1,8 @@
-import { buildDepositXdr } from "./_shared";
+import { buildDepositTx } from "@meridian/stellar-sdk-helpers";
+import { CONTRACT_ADDRESSES, STELLAR_NETWORKS } from "@meridian/shared";
+
+const network = STELLAR_NETWORKS.testnet;
+const vaultContractId = process.env.VAULT_CONTRACT_ID ?? CONTRACT_ADDRESSES.testnet.vault;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default async function handler(req: any, res: any) {
@@ -13,7 +17,7 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
-    const result = await buildDepositXdr(walletAddress, vaultId, amount);
+    const result = await buildDepositTx(vaultContractId, walletAddress, vaultId, amount, network);
     res.json(result);
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Failed to build deposit transaction";
