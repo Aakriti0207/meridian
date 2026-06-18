@@ -1,8 +1,9 @@
-import { fetchBlendPositions } from "@meridian/stellar-sdk-helpers";
+import { fetchBlendPositions, fetchDefindexPosition } from "@meridian/stellar-sdk-helpers";
 import { CONTRACT_ADDRESSES, STELLAR_NETWORKS } from "@meridian/shared";
 
 const network = STELLAR_NETWORKS.testnet;
 const addresses = CONTRACT_ADDRESSES.testnet;
+const defindexVaultId = process.env.DEFINDEX_VAULT_ID ?? addresses.defindex.vault;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default async function handler(req: any, res: any) {
@@ -17,6 +18,17 @@ export default async function handler(req: any, res: any) {
       { assetId: addresses.usdc, vaultId: "blend-usdc-fixed" },
       { assetId: addresses.eurc, vaultId: "blend-eurc-fixed" },
     ]);
+
+    if (defindexVaultId) {
+      // Isolated so a DeFindex read failure can't drop the Blend positions.
+      try {
+        const dfx = await fetchDefindexPosition(network, defindexVaultId, "defindex-usdc", publicKey);
+        positions.push(...dfx);
+      } catch (err) {
+        console.error("[positions] defindex read failed:", err);
+      }
+    }
+
     res.json({ positions });
   } catch (err) {
     console.error("[positions] error:", err);
