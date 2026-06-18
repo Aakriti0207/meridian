@@ -12,6 +12,10 @@ export const CONTRACT_ADDRESSES = {
     },
     defindex: {
       factory: "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK75",
+      // Single-asset (USDC) DeFindex vault. Empty until a real testnet vault is
+      // wired — until then DeFindex routes report "not configured" rather than
+      // pointing at a placeholder. Override at runtime with DEFINDEX_VAULT_ID.
+      vault: "",
     },
     usdc: "CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA",
     eurc: "CDTKPWPLOURQA2SGTKTUQOWRCBZEORB4BWBOMJ3D3ZTQQSGE5F6JBQLV",
