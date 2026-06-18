@@ -1,4 +1,7 @@
-import { submitSignedXdr } from "./_shared";
+import { submitTx } from "@meridian/stellar-sdk-helpers";
+import { STELLAR_NETWORKS } from "@meridian/shared";
+
+const network = STELLAR_NETWORKS.testnet;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default async function handler(req: any, res: any) {
@@ -8,7 +11,7 @@ export default async function handler(req: any, res: any) {
   if (!xdr) return res.status(400).json({ error: "Missing required field: xdr" });
 
   try {
-    const result = await submitSignedXdr(xdr);
+    const result = await submitTx(xdr, network);
     res.json(result);
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Failed to submit transaction";

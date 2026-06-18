@@ -1,0 +1,54 @@
+import { describe, it, expect, vi, afterEach } from "vitest";
+import { fetchAllVaults } from "./vaults";
+
+// Maps to blend-usdc-fixed in known-pools.ts.
+const KNOWN_BLEND = "ecf788e3-d2ef-4fdd-9ece-8a2d96226ddf";
+
+function llamaPool(overrides: Record<string, unknown> = {}) {
+  return {
+    pool: KNOWN_BLEND,
+    project: "blend",
+    symbol: "USDC",
+    tvlUsd: 5_000_000,
+    apy: 5.123,
+    apyPct1D: 0,
+    apyPct7D: 0,
+    apyPct30D: 0,
+    poolMeta: null,
+    stablecoin: true,
+    chain: "Stellar",
+    ...overrides,
+  };
+}
+
+function stubPools(data: unknown[]) {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async () => new Response(JSON.stringify({ data }), { status: 200 }))
+  );
+}
+
+describe("fetchAllVaults", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("maps known DeFiLlama pools and rounds APY to two decimals", async () => {
+    stubPools([llamaPool()]);
+    const vaults = await fetchAllVaults();
+    expect(vaults).toHaveLength(1);
+    expect(vaults[0].id).toBe("blend-usdc-fixed");
+    expect(vaults[0].protocol).toBe("blend");
+    expect(vaults[0].apy).toBe(5.12);
+    expect(vaults[0].riskLevel).toBe("safe");
+  });
+
+  it("skips pools with no known-pool mapping", async () => {
+    stubPools([llamaPool({ pool: "unrecognised-id" })]);
+    expect(await fetchAllVaults()).toEqual([]);
+  });
+
+  it("no longer emits a placeholder DeFindex vault", async () => {
+    stubPools([]);
+    const vaults = await fetchAllVaults();
+    expect(vaults.find((v) => v.protocol === "defindex")).toBeUndefined();
+  });
+});
