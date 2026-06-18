@@ -16,6 +16,7 @@ vi.mock("@meridian/stellar-sdk-helpers", () => ({
   fetchBlendPositions: vi.fn(async () => [
     { vaultId: "blend-usdc-fixed", shares: 1, deposited: 1, earned: 0, entryTime: 0 },
   ]),
+  fetchDefindexPosition: vi.fn(async () => []),
 }));
 
 import depositHandler from "../v1/tx/deposit";

@@ -7,9 +7,16 @@ import {
   rpc,
   xdr,
 } from "@stellar/stellar-sdk";
+import { simulateView } from "./tx";
 import type { StellarNetwork } from "./types";
+import type { PositionInfo } from "./positions";
 
 const BASE_FEE = "100";
+const STROOPS_PER_UNIT = 1e7;
+
+function toBigInt(value: unknown): bigint {
+  return BigInt((value as bigint | number | null) ?? 0);
+}
 
 export interface DefindexVaultConfig {
   // DeFindex vault contract (C...) the request targets.
@@ -91,4 +98,48 @@ export async function buildDefindexWithdrawTx(
     xdr.ScVal.scvVec([i128(0n)]),
     Address.fromString(withdrawer).toScVal(),
   ]);
+}
+
+/**
+ * Read a user's live position in a DeFindex vault via read-only simulation.
+ * `balance` gives the dfToken share count; `get_asset_amounts_per_shares` values
+ * those shares in the underlying asset. Returns `[]` when the user holds nothing.
+ *
+ * `shares` carries the dfToken count (not the USD value) because a DeFindex
+ * withdrawal burns shares — so the UI's "withdraw max" maps straight to it.
+ * `earned` is 0: a direct vault position has no on-chain cost basis (same as the
+ * Blend path).
+ */
+export async function fetchDefindexPosition(
+  network: StellarNetwork,
+  vaultId: string,
+  reportVaultId: string,
+  publicKey: string
+): Promise<PositionInfo[]> {
+  const server = new rpc.Server(network.rpcUrl);
+  const caller = Address.fromString(publicKey).toScVal();
+
+  const shares = toBigInt(
+    await simulateView(server, vaultId, network.passphrase, "balance", caller)
+  );
+  if (shares <= 0n) return [];
+
+  const amounts = (await simulateView(
+    server,
+    vaultId,
+    network.passphrase,
+    "get_asset_amounts_per_shares",
+    i128(shares)
+  )) as Array<bigint | number> | null;
+  const underlying = Array.isArray(amounts) && amounts.length > 0 ? toBigInt(amounts[0]) : 0n;
+
+  return [
+    {
+      vaultId: reportVaultId,
+      shares: Number(shares) / STROOPS_PER_UNIT,
+      deposited: Number(underlying) / STROOPS_PER_UNIT,
+      earned: 0,
+      entryTime: 0,
+    },
+  ];
 }
