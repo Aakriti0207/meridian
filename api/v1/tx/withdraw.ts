@@ -1,5 +1,6 @@
 import {
   buildBlendWithdrawTx,
+  buildDefindexWithdrawTx,
   blendAssetForVault,
   resolveProtocol,
   toStroops,
@@ -8,6 +9,7 @@ import { CONTRACT_ADDRESSES, STELLAR_NETWORKS } from "@meridian/shared";
 
 const network = STELLAR_NETWORKS.testnet;
 const addresses = CONTRACT_ADDRESSES.testnet;
+const defindexVaultId = process.env.DEFINDEX_VAULT_ID ?? addresses.defindex.vault;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default async function handler(req: any, res: any) {
@@ -35,9 +37,18 @@ export default async function handler(req: any, res: any) {
       return res.json(result);
     }
 
-    return res
-      .status(501)
-      .json({ error: "DeFindex withdrawals are not implemented yet. See issue #5." });
+    if (!defindexVaultId) {
+      return res
+        .status(501)
+        .json({ error: "DeFindex vault not configured. Set DEFINDEX_VAULT_ID. See issue #5." });
+    }
+    // For a DeFindex vault, `amount` is the number of dfToken shares to burn.
+    const result = await buildDefindexWithdrawTx(
+      { vaultId: defindexVaultId, network },
+      walletAddress,
+      toStroops(amount)
+    );
+    return res.json(result);
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Failed to build withdraw transaction";
     res.status(500).json({ error: msg });

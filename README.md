@@ -20,12 +20,12 @@ Meridian is a **testnet technical preview**, not a finished product. Be clear-ey
 - `MeridianVault` Soroban contract (ERC-4626-style share accounting hardened against the first-depositor inflation attack, pause + admin-rotation rails) with unit tests — reserved for the v2 single-transaction rebalancing router (#8)
 
 **In progress — the core promise is not finished**
-- Direct deposit/withdraw against real DeFindex vaults (#5)
+- Direct deposit/withdraw against real DeFindex vaults (#5) — *transaction builders are implemented locally (no hosted API); gated behind `DEFINDEX_VAULT_ID` until a real testnet vault is wired*
 - Best-rate routing API that automatically picks the winning pool (#6)
-- Per-position yield earned (cost-basis tracking for a direct Blend supply)
+- Live DeFindex position reads, and per-position yield earned (cost-basis tracking for a direct Blend supply)
 - Mainnet configuration and a security audit before any real-funds use
 
-DeFindex routes currently return `501` rather than silently routing elsewhere. Track progress in the [Roadmap](#roadmap) and [open issues](../../issues).
+Until a DeFindex vault is configured, DeFindex routes return `501` rather than silently routing elsewhere. Track progress in the [Roadmap](#roadmap) and [open issues](../../issues).
 
 ---
 

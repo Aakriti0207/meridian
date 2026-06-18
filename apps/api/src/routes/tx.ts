@@ -3,6 +3,8 @@ import { DepositRequestSchema, WithdrawRequestSchema, CONTRACT_ADDRESSES, STELLA
 import {
   buildBlendDepositTx,
   buildBlendWithdrawTx,
+  buildDefindexDepositTx,
+  buildDefindexWithdrawTx,
   blendAssetForVault,
   resolveProtocol,
   toStroops,
@@ -12,6 +14,7 @@ import {
 
 const network = STELLAR_NETWORKS.testnet;
 const addresses = CONTRACT_ADDRESSES.testnet;
+const defindexVaultId = process.env.DEFINDEX_VAULT_ID ?? addresses.defindex.vault;
 
 export const txRoute: FastifyPluginAsync = async (app) => {
   app.post("/deposit", async (req, reply) => {
@@ -24,12 +27,20 @@ export const txRoute: FastifyPluginAsync = async (app) => {
 
     try {
       const { walletAddress, vaultId, amount } = parsed.data;
-      if (resolveProtocol(vaultId) !== "Blend") {
-        return reply.code(501).send({ error: "DeFindex deposits are not implemented yet. See issue #5." });
+      if (resolveProtocol(vaultId) === "Blend") {
+        const asset = blendAssetForVault(vaultId);
+        const result = await buildBlendDepositTx(
+          { poolId: addresses.blend.pool, assetId: addresses[asset], network },
+          walletAddress,
+          toStroops(amount)
+        );
+        return reply.send(result);
       }
-      const asset = blendAssetForVault(vaultId);
-      const result = await buildBlendDepositTx(
-        { poolId: addresses.blend.pool, assetId: addresses[asset], network },
+      if (!defindexVaultId) {
+        return reply.code(501).send({ error: "DeFindex vault not configured. Set DEFINDEX_VAULT_ID. See issue #5." });
+      }
+      const result = await buildDefindexDepositTx(
+        { vaultId: defindexVaultId, network },
         walletAddress,
         toStroops(amount)
       );
@@ -50,12 +61,21 @@ export const txRoute: FastifyPluginAsync = async (app) => {
 
     try {
       const { walletAddress, vaultId, amount } = parsed.data;
-      if (resolveProtocol(vaultId) !== "Blend") {
-        return reply.code(501).send({ error: "DeFindex withdrawals are not implemented yet. See issue #5." });
+      if (resolveProtocol(vaultId) === "Blend") {
+        const asset = blendAssetForVault(vaultId);
+        const result = await buildBlendWithdrawTx(
+          { poolId: addresses.blend.pool, assetId: addresses[asset], network },
+          walletAddress,
+          toStroops(amount)
+        );
+        return reply.send(result);
       }
-      const asset = blendAssetForVault(vaultId);
-      const result = await buildBlendWithdrawTx(
-        { poolId: addresses.blend.pool, assetId: addresses[asset], network },
+      if (!defindexVaultId) {
+        return reply.code(501).send({ error: "DeFindex vault not configured. Set DEFINDEX_VAULT_ID. See issue #5." });
+      }
+      // For a DeFindex vault, `amount` is the number of dfToken shares to burn.
+      const result = await buildDefindexWithdrawTx(
+        { vaultId: defindexVaultId, network },
         walletAddress,
         toStroops(amount)
       );
