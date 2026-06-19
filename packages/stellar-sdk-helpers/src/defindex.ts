@@ -1,21 +1,22 @@
 import {
   Address,
   Contract,
-  Networks,
-  TransactionBuilder,
   nativeToScVal,
   rpc,
   xdr,
 } from "@stellar/stellar-sdk";
-import { simulateView } from "./tx";
+import { simulateView, prepareSorobanTx } from "./tx";
 import type { StellarNetwork } from "./types";
 import type { PositionInfo } from "./positions";
+import { toBigInt } from "./internal";
 
-const BASE_FEE = "100";
-const STROOPS_PER_UNIT = 1e7;
+const STROOPS = 10_000_000n;
 
-function toBigInt(value: unknown): bigint {
-  return BigInt((value as bigint | number | null) ?? 0);
+// Converts a stroop-denominated bigint to a floating-point unit value without
+// precision loss: the whole-unit part stays in bigint space until it fits
+// safely in a Number, then the sub-unit remainder is added as a fraction.
+export function stroopsToUnits(stroops: bigint): number {
+  return Number(stroops / STROOPS) + Number(stroops % STROOPS) / 1e7;
 }
 
 export interface DefindexVaultConfig {
@@ -24,35 +25,8 @@ export interface DefindexVaultConfig {
   network: StellarNetwork;
 }
 
-function passphraseFor(network: StellarNetwork): string {
-  return network.network === "mainnet" ? Networks.PUBLIC : Networks.TESTNET;
-}
-
 function i128(value: bigint): xdr.ScVal {
   return nativeToScVal(value, { type: "i128" });
-}
-
-async function prepareVaultTx(
-  config: DefindexVaultConfig,
-  caller: string,
-  method: string,
-  args: xdr.ScVal[]
-): Promise<{ xdr: string; fee: string }> {
-  const passphrase = passphraseFor(config.network);
-  const server = new rpc.Server(config.network.rpcUrl);
-  const account = await server.getAccount(caller);
-  const contract = new Contract(config.vaultId);
-
-  const tx = new TransactionBuilder(account, { fee: BASE_FEE, networkPassphrase: passphrase })
-    .addOperation(contract.call(method, ...args))
-    .setTimeout(300)
-    .build();
-
-  const sim = await server.simulateTransaction(tx);
-  if (rpc.Api.isSimulationError(sim)) throw new Error(`Simulation failed: ${sim.error}`);
-
-  const prepared = rpc.assembleTransaction(tx, sim).build();
-  return { xdr: prepared.toEnvelope().toXDR("base64"), fee: sim.minResourceFee };
 }
 
 /**
@@ -62,21 +36,27 @@ async function prepareVaultTx(
  * returned XDR and holds the resulting dfToken shares directly — non-custodial.
  *
  * Contract ABI: deposit(amounts_desired: Vec<i128>, amounts_min: Vec<i128>,
- * from: Address, invest: bool). Single-asset vault, so each Vec has one element
- * and amounts_min equals amounts_desired (no slippage for a 1:1 deposit).
+ * from: Address, invest: bool). Single-asset vault, so each Vec has one element.
+ *
+ * `slippageBps` (default 10 = 0.1%) controls the gap between amounts_desired
+ * and amounts_min so minor share-price rounding between simulation and submission
+ * does not revert the transaction. Pass 0 only in tests.
  */
 export async function buildDefindexDepositTx(
   config: DefindexVaultConfig,
   depositor: string,
-  amount: bigint
+  amount: bigint,
+  slippageBps = 10n
 ): Promise<{ xdr: string; fee: string }> {
   if (amount <= 0n) throw new Error("amount must be positive");
-  return prepareVaultTx(config, depositor, "deposit", [
+  const minAmount = amount - (amount * slippageBps) / 10_000n;
+  const contract = new Contract(config.vaultId);
+  return prepareSorobanTx(config.network, depositor, contract.call("deposit",
     xdr.ScVal.scvVec([i128(amount)]),
-    xdr.ScVal.scvVec([i128(amount)]),
+    xdr.ScVal.scvVec([i128(minAmount)]),
     Address.fromString(depositor).toScVal(),
     xdr.ScVal.scvBool(true),
-  ]);
+  ));
 }
 
 /**
@@ -93,11 +73,12 @@ export async function buildDefindexWithdrawTx(
   shares: bigint
 ): Promise<{ xdr: string; fee: string }> {
   if (shares <= 0n) throw new Error("shares must be positive");
-  return prepareVaultTx(config, withdrawer, "withdraw", [
+  const contract = new Contract(config.vaultId);
+  return prepareSorobanTx(config.network, withdrawer, contract.call("withdraw",
     i128(shares),
     xdr.ScVal.scvVec([i128(0n)]),
     Address.fromString(withdrawer).toScVal(),
-  ]);
+  ));
 }
 
 /**
@@ -136,8 +117,8 @@ export async function fetchDefindexPosition(
   return [
     {
       vaultId: reportVaultId,
-      shares: Number(shares) / STROOPS_PER_UNIT,
-      deposited: Number(underlying) / STROOPS_PER_UNIT,
+      shares: stroopsToUnits(shares),
+      deposited: stroopsToUnits(underlying),
       earned: 0,
       entryTime: 0,
     },

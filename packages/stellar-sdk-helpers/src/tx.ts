@@ -2,17 +2,16 @@ import {
   Account,
   Contract,
   TransactionBuilder,
-  Address,
   Asset,
   Horizon,
   Operation,
-  nativeToScVal,
   scValToNative,
   rpc,
   xdr,
   Networks,
 } from "@stellar/stellar-sdk";
 import type { StellarNetwork } from "./types";
+import { BASE_FEE } from "./internal";
 
 const USDC_ISSUER: Record<string, string> = {
   testnet: "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
@@ -29,8 +28,6 @@ const HORIZON_URL: Record<string, string> = {
   testnet: "https://horizon-testnet.stellar.org",
   mainnet: "https://horizon.stellar.org",
 };
-
-const BASE_FEE = "100";
 
 function usdcAsset(network: StellarNetwork): Asset {
   const issuer = USDC_ISSUER[network.network];
@@ -61,18 +58,6 @@ function hasAssetTrustline(
   );
 }
 
-async function assertTrustlines(walletAddress: string, network: StellarNetwork): Promise<void> {
-  const horizon = horizonServer(network);
-  const account = await horizon.loadAccount(walletAddress);
-
-  if (!hasAssetTrustline(account.balances, "USDC", USDC_ISSUER[network.network] ?? "")) {
-    throw new Error("USDC trustline missing. Add vault assets to your wallet before depositing.");
-  }
-  if (MUSDC_ISSUER[network.network] && !hasAssetTrustline(account.balances, "MUSDC", MUSDC_ISSUER[network.network])) {
-    throw new Error("mUSDC trustline missing. Add vault assets to your wallet before depositing.");
-  }
-}
-
 export function toStroops(value: string): bigint {
   const [whole = "0", frac = ""] = value.split(".");
   const fracPadded = frac.padEnd(7, "0").slice(0, 7);
@@ -94,7 +79,7 @@ export async function simulateView(
 ): Promise<unknown> {
   const dummyAccount = new Account("GAAZI4TCR3TY5OJHCTJC2A4QSY6CJWJH5IAJTGKIN2ER7LBNVKOCCWN", "0");
   const contract = new Contract(contractId);
-  const tx = new TransactionBuilder(dummyAccount, { fee: "100", networkPassphrase })
+  const tx = new TransactionBuilder(dummyAccount, { fee: BASE_FEE, networkPassphrase })
     .addOperation(contract.call(method, ...args))
     .setTimeout(0)
     .build();
@@ -102,6 +87,24 @@ export async function simulateView(
   if (rpc.Api.isSimulationError(sim)) throw new Error(sim.error);
   if (!rpc.Api.isSimulationSuccess(sim) || !sim.result) return null;
   return scValToNative(sim.result.retval);
+}
+
+export async function prepareSorobanTx(
+  network: StellarNetwork,
+  caller: string,
+  op: xdr.Operation
+): Promise<{ xdr: string; fee: string }> {
+  const passphrase = network.network === "mainnet" ? Networks.PUBLIC : Networks.TESTNET;
+  const server = new rpc.Server(network.rpcUrl);
+  const account = await server.getAccount(caller);
+  const tx = new TransactionBuilder(account, { fee: BASE_FEE, networkPassphrase: passphrase })
+    .addOperation(op)
+    .setTimeout(300)
+    .build();
+  const sim = await server.simulateTransaction(tx);
+  if (rpc.Api.isSimulationError(sim)) throw new Error(`Simulation failed: ${sim.error}`);
+  const prepared = rpc.assembleTransaction(tx, sim).build();
+  return { xdr: prepared.toEnvelope().toXDR("base64"), fee: sim.minResourceFee };
 }
 
 export async function buildAddTrustlineTx(
@@ -129,69 +132,6 @@ export async function buildAddTrustlineTx(
   const tx = builder.setTimeout(300).build();
 
   return { xdr: tx.toEnvelope().toXDR("base64") };
-}
-
-export async function buildDepositTx(
-  contractId: string,
-  walletAddress: string,
-  vaultId: string,
-  amount: string,
-  network: StellarNetwork
-): Promise<{ xdr: string; fee: string }> {
-  await assertTrustlines(walletAddress, network);
-
-  const protocol = resolveProtocol(vaultId);
-  const passphrase = network.network === "mainnet" ? Networks.PUBLIC : Networks.TESTNET;
-  const server = new rpc.Server(network.rpcUrl);
-  const account = await server.getAccount(walletAddress);
-  const contract = new Contract(contractId);
-
-  const tx = new TransactionBuilder(account, { fee: BASE_FEE, networkPassphrase: passphrase })
-    .addOperation(
-      contract.call(
-        "deposit",
-        Address.fromString(walletAddress).toScVal(),
-        nativeToScVal(toStroops(amount), { type: "i128" }),
-        xdr.ScVal.scvVec([xdr.ScVal.scvSymbol(protocol)]),
-      )
-    )
-    .setTimeout(300)
-    .build();
-
-  const sim = await server.simulateTransaction(tx);
-  if (rpc.Api.isSimulationError(sim)) throw new Error(`Simulation failed: ${sim.error}`);
-
-  const prepared = rpc.assembleTransaction(tx, sim).build();
-  return { xdr: prepared.toEnvelope().toXDR("base64"), fee: sim.minResourceFee };
-}
-
-export async function buildWithdrawTx(
-  contractId: string,
-  walletAddress: string,
-  shares: string,
-  network: StellarNetwork
-): Promise<{ xdr: string; fee: string }> {
-  const passphrase = network.network === "mainnet" ? Networks.PUBLIC : Networks.TESTNET;
-  const server = new rpc.Server(network.rpcUrl);
-  const account = await server.getAccount(walletAddress);
-  const contract = new Contract(contractId);
-
-  const tx = new TransactionBuilder(account, { fee: BASE_FEE, networkPassphrase: passphrase })
-    .addOperation(
-      contract.call(
-        "withdraw",
-        Address.fromString(walletAddress).toScVal(),
-        nativeToScVal(toStroops(shares), { type: "i128" }),
-      )
-    )
-    .setTimeout(300)
-    .build();
-
-  const sim = await server.simulateTransaction(tx);
-  if (rpc.Api.isSimulationError(sim)) throw new Error(`Simulation failed: ${sim.error}`);
-
-  const prepared = rpc.assembleTransaction(tx, sim).build();
-  return { xdr: prepared.toEnvelope().toXDR("base64"), fee: sim.minResourceFee };
 }
 
 // Default polling cadence for confirmation. Soroban testnet/mainnet close

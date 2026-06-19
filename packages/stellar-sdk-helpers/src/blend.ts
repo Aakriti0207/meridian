@@ -1,9 +1,8 @@
-import { Networks, TransactionBuilder, rpc, xdr } from "@stellar/stellar-sdk";
+import { xdr } from "@stellar/stellar-sdk";
 import { PoolContractV2, PoolV2, RequestType } from "@blend-capital/blend-sdk";
+import { prepareSorobanTx } from "./tx";
 import type { StellarNetwork } from "./types";
 import type { PositionInfo } from "./positions";
-
-const BASE_FEE = "100";
 
 export interface BlendPoolConfig {
   // Blend pool contract (C...) the request is submitted to.
@@ -11,10 +10,6 @@ export interface BlendPoolConfig {
   // Reserve asset contract — the USDC/EURC Stellar Asset Contract being moved.
   assetId: string;
   network: StellarNetwork;
-}
-
-function passphraseFor(network: StellarNetwork): string {
-  return network.network === "mainnet" ? Networks.PUBLIC : Networks.TESTNET;
 }
 
 // Map a Meridian vault id (e.g. "blend-usdc-fixed") to the reserve asset whose
@@ -34,10 +29,6 @@ async function buildPoolRequestTx(
 ): Promise<{ xdr: string; fee: string }> {
   if (amount <= 0n) throw new Error("amount must be positive");
 
-  const passphrase = passphraseFor(config.network);
-  const server = new rpc.Server(config.network.rpcUrl);
-  const account = await server.getAccount(caller);
-
   // PoolContractV2.submit returns a base64 Soroban operation; we wrap it in a
   // transaction, simulate to obtain the resource footprint + fee, then assemble.
   const pool = new PoolContractV2(config.poolId);
@@ -48,17 +39,7 @@ async function buildPoolRequestTx(
     requests: [{ request_type: requestType, address: config.assetId, amount }],
   });
   const op = xdr.Operation.fromXDR(opXdr, "base64");
-
-  const tx = new TransactionBuilder(account, { fee: BASE_FEE, networkPassphrase: passphrase })
-    .addOperation(op)
-    .setTimeout(300)
-    .build();
-
-  const sim = await server.simulateTransaction(tx);
-  if (rpc.Api.isSimulationError(sim)) throw new Error(`Simulation failed: ${sim.error}`);
-
-  const prepared = rpc.assembleTransaction(tx, sim).build();
-  return { xdr: prepared.toEnvelope().toXDR("base64"), fee: sim.minResourceFee };
+  return prepareSorobanTx(config.network, caller, op);
 }
 
 /**
@@ -101,12 +82,13 @@ export interface BlendReserveRef {
 /**
  * Read a user's live supply position in a Blend pool, one entry per reserve the
  * user holds. The pool ledger state is loaded once and each reserve is valued
- * via the SDK (collateral + plain supply, in underlying asset units).
+ * via the SDK in underlying asset units.
  *
- * `deposited` is the current value of the position; `shares` mirrors it so the
- * UI's "withdraw max" reflects the full withdrawable amount. `earned` is 0 for
- * now — a direct Blend supply carries no on-chain cost basis, so yield can't be
- * derived without event indexing (tracked separately).
+ * `shares` is the collateral-only balance because Meridian withdrawals use
+ * RequestType.WithdrawCollateral; including plain-supply in `shares` would cause
+ * the withdraw-max flow to submit an amount the pool contract would reject.
+ * `deposited` is the full balance (collateral + plain supply) for display.
+ * `earned` is 0 -- a direct Blend supply has no on-chain cost basis.
  */
 export async function fetchBlendPositions(
   network: StellarNetwork,
@@ -121,9 +103,10 @@ export async function fetchBlendPositions(
   for (const { assetId, vaultId } of reserves) {
     const reserve = pool.reserves.get(assetId);
     if (!reserve) continue;
-    const value = user.getCollateralFloat(reserve) + user.getSupplyFloat(reserve);
-    if (value <= 0) continue;
-    positions.push({ vaultId, shares: value, deposited: value, earned: 0, entryTime: 0 });
+    const collateral = user.getCollateralFloat(reserve);
+    const total = collateral + user.getSupplyFloat(reserve);
+    if (total <= 0) continue;
+    positions.push({ vaultId, shares: collateral, deposited: total, earned: 0, entryTime: 0 });
   }
   return positions;
 }

@@ -1,20 +1,14 @@
 import type { FastifyPluginAsync } from "fastify";
 import { DepositRequestSchema, WithdrawRequestSchema, CONTRACT_ADDRESSES, STELLAR_NETWORKS } from "@meridian/shared";
 import {
-  buildBlendDepositTx,
-  buildBlendWithdrawTx,
-  buildDefindexDepositTx,
-  buildDefindexWithdrawTx,
-  blendAssetForVault,
-  resolveProtocol,
-  toStroops,
+  buildDepositTx,
+  buildWithdrawTx,
   buildAddTrustlineTx,
   submitTx,
 } from "@meridian/stellar-sdk-helpers";
 
 const network = STELLAR_NETWORKS.testnet;
 const addresses = CONTRACT_ADDRESSES.testnet;
-const defindexVaultId = process.env.DEFINDEX_VAULT_ID ?? addresses.defindex.vault;
 
 export const txRoute: FastifyPluginAsync = async (app) => {
   app.post("/deposit", async (req, reply) => {
@@ -27,23 +21,12 @@ export const txRoute: FastifyPluginAsync = async (app) => {
 
     try {
       const { walletAddress, vaultId, amount } = parsed.data;
-      if (resolveProtocol(vaultId) === "Blend") {
-        const asset = blendAssetForVault(vaultId);
-        const result = await buildBlendDepositTx(
-          { poolId: addresses.blend.pool, assetId: addresses[asset], network },
-          walletAddress,
-          toStroops(amount)
-        );
-        return reply.send(result);
-      }
-      if (!defindexVaultId) {
-        return reply.code(501).send({ error: "DeFindex vault not configured. Set DEFINDEX_VAULT_ID. See issue #5." });
-      }
-      const result = await buildDefindexDepositTx(
-        { vaultId: defindexVaultId, network },
-        walletAddress,
-        toStroops(amount)
-      );
+      const result = await buildDepositTx(vaultId, walletAddress, amount, {
+        blendPool: addresses.blend.pool,
+        usdc: addresses.usdc,
+        eurc: addresses.eurc,
+        defindexVault: process.env.DEFINDEX_VAULT_ID ?? addresses.defindex.vault,
+      }, network);
       reply.send(result);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Failed to build deposit transaction";
@@ -61,24 +44,13 @@ export const txRoute: FastifyPluginAsync = async (app) => {
 
     try {
       const { walletAddress, vaultId, amount } = parsed.data;
-      if (resolveProtocol(vaultId) === "Blend") {
-        const asset = blendAssetForVault(vaultId);
-        const result = await buildBlendWithdrawTx(
-          { poolId: addresses.blend.pool, assetId: addresses[asset], network },
-          walletAddress,
-          toStroops(amount)
-        );
-        return reply.send(result);
-      }
-      if (!defindexVaultId) {
-        return reply.code(501).send({ error: "DeFindex vault not configured. Set DEFINDEX_VAULT_ID. See issue #5." });
-      }
       // For a DeFindex vault, `amount` is the number of dfToken shares to burn.
-      const result = await buildDefindexWithdrawTx(
-        { vaultId: defindexVaultId, network },
-        walletAddress,
-        toStroops(amount)
-      );
+      const result = await buildWithdrawTx(vaultId, walletAddress, amount, {
+        blendPool: addresses.blend.pool,
+        usdc: addresses.usdc,
+        eurc: addresses.eurc,
+        defindexVault: process.env.DEFINDEX_VAULT_ID ?? addresses.defindex.vault,
+      }, network);
       reply.send(result);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Failed to build withdraw transaction";

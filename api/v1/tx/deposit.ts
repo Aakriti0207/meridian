@@ -1,15 +1,8 @@
-import {
-  buildBlendDepositTx,
-  buildDefindexDepositTx,
-  blendAssetForVault,
-  resolveProtocol,
-  toStroops,
-} from "@meridian/stellar-sdk-helpers";
+import { buildDepositTx } from "@meridian/stellar-sdk-helpers";
 import { CONTRACT_ADDRESSES, STELLAR_NETWORKS } from "@meridian/shared";
 
 const network = STELLAR_NETWORKS.testnet;
 const addresses = CONTRACT_ADDRESSES.testnet;
-const defindexVaultId = process.env.DEFINDEX_VAULT_ID ?? addresses.defindex.vault;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default async function handler(req: any, res: any) {
@@ -24,28 +17,12 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
-    const protocol = resolveProtocol(vaultId);
-
-    if (protocol === "Blend") {
-      const asset = blendAssetForVault(vaultId);
-      const result = await buildBlendDepositTx(
-        { poolId: addresses.blend.pool, assetId: addresses[asset], network },
-        walletAddress,
-        toStroops(amount)
-      );
-      return res.json(result);
-    }
-
-    if (!defindexVaultId) {
-      return res
-        .status(501)
-        .json({ error: "DeFindex vault not configured. Set DEFINDEX_VAULT_ID. See issue #5." });
-    }
-    const result = await buildDefindexDepositTx(
-      { vaultId: defindexVaultId, network },
-      walletAddress,
-      toStroops(amount)
-    );
+    const result = await buildDepositTx(vaultId, walletAddress, amount, {
+      blendPool: addresses.blend.pool,
+      usdc: addresses.usdc,
+      eurc: addresses.eurc,
+      defindexVault: process.env.DEFINDEX_VAULT_ID ?? addresses.defindex.vault,
+    }, network);
     return res.json(result);
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Failed to build deposit transaction";
