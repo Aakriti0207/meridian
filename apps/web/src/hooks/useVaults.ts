@@ -12,10 +12,7 @@ export function useVaults() {
   return useQuery<VaultsResult, Error>({
     queryKey: ["vaults"],
     queryFn: async () => {
-      const [data] = await Promise.all([
-        api.getVaults(),
-        new Promise((r) => setTimeout(r, 2_000)),
-      ]);
+      const data = await api.getVaults();
       return { vaults: data.vaults, recommendedVaultId: data.recommendedVaultId };
     },
     staleTime: 5 * 60_000,
