@@ -26,6 +26,12 @@ const LIMIT = 20;
 const WINDOW_MS = 60_000;
 
 function clientIp(req: VercelRequest): string {
+  // x-vercel-forwarded-for is set by the Vercel edge and cannot be spoofed
+  // by the client, unlike x-forwarded-for which is client-controlled.
+  const vercelIp = req.headers["x-vercel-forwarded-for"];
+  if (typeof vercelIp === "string" && vercelIp) return vercelIp.split(",")[0].trim();
+
+  // Fallback for local dev (Fastify / pnpm dev) where Vercel headers are absent.
   const fwd = req.headers["x-forwarded-for"];
   return (typeof fwd === "string" ? fwd.split(",")[0].trim() : null) ??
     req.socket?.remoteAddress ??
