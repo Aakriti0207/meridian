@@ -8,7 +8,7 @@ export const positionsRoute: FastifyPluginAsync = async (app) => {
   app.get("/:publicKey", async (req, reply) => {
     const { publicKey } = req.params as { publicKey: string };
 
-    if (!publicKey || publicKey.length !== 56) {
+    if (!publicKey || !/^G[A-Z2-7]{55}$/.test(publicKey)) {
       return reply.code(400).send({ error: "Invalid public key" });
     }
 

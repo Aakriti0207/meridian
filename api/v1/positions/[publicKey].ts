@@ -9,7 +9,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (applyCors(req, res)) return;
   const { publicKey } = req.query as { publicKey: string };
 
-  if (!publicKey || publicKey.length !== 56) {
+  if (!publicKey || !/^G[A-Z2-7]{55}$/.test(publicKey)) {
     return res.status(400).json({ error: "Invalid public key" });
   }
 
