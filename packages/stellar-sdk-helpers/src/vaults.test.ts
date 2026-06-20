@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { fetchAllVaults } from "./vaults";
+import { fetchAllVaults, clearVaultCache } from "./vaults";
 
 // Maps to blend-usdc-fixed in known-pools.ts.
 const KNOWN_BLEND = "ecf788e3-d2ef-4fdd-9ece-8a2d96226ddf";
@@ -29,7 +29,10 @@ function stubPools(data: unknown[]) {
 }
 
 describe("fetchAllVaults", () => {
-  afterEach(() => vi.unstubAllGlobals());
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    clearVaultCache();
+  });
 
   it("maps known DeFiLlama pools and rounds APY to two decimals", async () => {
     stubPools([llamaPool()]);
@@ -50,5 +53,17 @@ describe("fetchAllVaults", () => {
     stubPools([]);
     const vaults = await fetchAllVaults();
     expect(vaults.find((v) => v.protocol === "defindex")).toBeUndefined();
+  });
+
+  it("returns cached result and skips DeFiLlama on repeated calls within TTL", async () => {
+    const mockFetch = vi.fn(async () =>
+      new Response(JSON.stringify({ data: [llamaPool()] }), { status: 200 })
+    );
+    vi.stubGlobal("fetch", mockFetch);
+
+    await fetchAllVaults();
+    await fetchAllVaults();
+
+    expect(mockFetch).toHaveBeenCalledOnce();
   });
 });

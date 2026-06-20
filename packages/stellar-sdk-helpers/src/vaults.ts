@@ -13,10 +13,24 @@ export interface ApiVault {
   riskLevel: RiskLevel;
 }
 
+// TTL matches the CDN s-maxage on the vaults endpoint (60 s). Both the Fastify
+// server (long-lived process) and warm Vercel invocations benefit from this
+// without adding any external dependency.
+const CACHE_TTL_MS = 60_000;
+let vaultCache: { vaults: ApiVault[]; expiresAt: number } | null = null;
+
+/** Clears the in-memory vault cache. Exposed for tests only. */
+export function clearVaultCache(): void {
+  vaultCache = null;
+}
+
 // Every vault in the list is backed by live DeFiLlama market data. Protocols
 // without a real on-chain rate feed wired up yet are intentionally omitted
 // rather than shown with placeholder figures.
 export async function fetchAllVaults(): Promise<ApiVault[]> {
+  const now = Date.now();
+  if (vaultCache && now < vaultCache.expiresAt) return vaultCache.vaults;
+
   const pools = await getStellarStablecoinPools();
 
   const vaults: ApiVault[] = [];
@@ -36,5 +50,6 @@ export async function fetchAllVaults(): Promise<ApiVault[]> {
     });
   }
 
+  vaultCache = { vaults, expiresAt: now + CACHE_TTL_MS };
   return vaults;
 }
