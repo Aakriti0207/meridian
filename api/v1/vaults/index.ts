@@ -1,5 +1,5 @@
 import { fetchAllVaults, selectBestVault } from "@meridian/stellar-sdk-helpers";
-import { CONTRACT_ADDRESSES } from "@meridian/shared";
+import { APP_ADDRESSES } from "@meridian/shared";
 import { applyCors } from "../../_lib/middleware";
 
 // Cache the aggregated vault list at the Vercel CDN. APY/TVL move slowly, so a
@@ -8,9 +8,7 @@ import { applyCors } from "../../_lib/middleware";
 // transient DeFiLlama outage instead of failing the whole dashboard.
 const CACHE_CONTROL = "public, s-maxage=60, stale-while-revalidate=300";
 
-const defindexConfigured = Boolean(
-  process.env.DEFINDEX_VAULT_ID ?? CONTRACT_ADDRESSES.testnet.defindex.vault
-);
+const defindexConfigured = Boolean(process.env.DEFINDEX_VAULT_ID ?? APP_ADDRESSES.defindex.vault);
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default async function handler(req: any, res: any) {
