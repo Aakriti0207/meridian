@@ -1,9 +1,6 @@
 import { buildWithdrawTx } from "@meridian/stellar-sdk-helpers";
-import { CONTRACT_ADDRESSES, STELLAR_NETWORKS } from "@meridian/shared";
+import { APP_NETWORK, buildTxAddresses, WithdrawRequestSchema, formatZodError } from "@meridian/shared";
 import { applyCors, checkRateLimit } from "../../_lib/middleware";
-
-const network = STELLAR_NETWORKS.testnet;
-const addresses = CONTRACT_ADDRESSES.testnet;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default async function handler(req: any, res: any) {
@@ -11,21 +8,16 @@ export default async function handler(req: any, res: any) {
   if (!checkRateLimit(req, res)) return;
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
-  const { walletAddress, vaultId, shares } = req.body ?? {};
-  if (!walletAddress || !vaultId || !shares) {
-    const missing = (["walletAddress", "vaultId", "shares"] as const)
-      .filter((k) => !req.body?.[k])
-      .join(", ");
-    return res.status(400).json({ error: `Missing required fields: ${missing}` });
-  }
+  const parsed = WithdrawRequestSchema.safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: formatZodError(parsed.error) });
 
   try {
-    const result = await buildWithdrawTx(vaultId, walletAddress, shares, {
-      blendPool: addresses.blend.pool,
-      usdc: addresses.usdc,
-      eurc: addresses.eurc,
-      defindexVault: process.env.DEFINDEX_VAULT_ID ?? addresses.defindex.vault,
-    }, network);
+    const { walletAddress, vaultId, shares } = parsed.data;
+    const result = await buildWithdrawTx(
+      vaultId, walletAddress, shares,
+      buildTxAddresses(process.env.DEFINDEX_VAULT_ID),
+      APP_NETWORK
+    );
     return res.json(result);
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Failed to build withdraw transaction";

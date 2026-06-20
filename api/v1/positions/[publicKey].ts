@@ -1,10 +1,8 @@
 import { fetchBlendPositions, fetchDefindexPosition } from "@meridian/stellar-sdk-helpers";
-import { CONTRACT_ADDRESSES, STELLAR_NETWORKS } from "@meridian/shared";
+import { APP_NETWORK, APP_ADDRESSES } from "@meridian/shared";
 import { applyCors } from "../../_lib/middleware";
 
-const network = STELLAR_NETWORKS.testnet;
-const addresses = CONTRACT_ADDRESSES.testnet;
-const defindexVaultId = process.env.DEFINDEX_VAULT_ID ?? addresses.defindex.vault;
+const defindexVaultId = process.env.DEFINDEX_VAULT_ID ?? APP_ADDRESSES.defindex.vault;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default async function handler(req: any, res: any) {
@@ -16,15 +14,15 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
-    const positions = await fetchBlendPositions(network, addresses.blend.pool, publicKey, [
-      { assetId: addresses.usdc, vaultId: "blend-usdc-fixed" },
-      { assetId: addresses.eurc, vaultId: "blend-eurc-fixed" },
+    const positions = await fetchBlendPositions(APP_NETWORK, APP_ADDRESSES.blend.pool, publicKey, [
+      { assetId: APP_ADDRESSES.usdc, vaultId: "blend-usdc-fixed" },
+      { assetId: APP_ADDRESSES.eurc, vaultId: "blend-eurc-fixed" },
     ]);
 
     if (defindexVaultId) {
       // Isolated so a DeFindex read failure can't drop the Blend positions.
       try {
-        const dfx = await fetchDefindexPosition(network, defindexVaultId, "defindex-usdc", publicKey);
+        const dfx = await fetchDefindexPosition(APP_NETWORK, defindexVaultId, "defindex-usdc", publicKey);
         positions.push(...dfx);
       } catch (err) {
         console.error("[positions] defindex read failed:", err);

@@ -68,7 +68,7 @@ describe("POST /api/v1/tx/deposit", () => {
     const res = makeRes();
     await depositHandler({ method: "POST", body: { walletAddress: PUBKEY } }, res);
     expect(res.statusCode).toBe(400);
-    expect(res.body).toEqual({ error: "Missing required fields: vaultId, amount" });
+    expect(res.body).toEqual({ error: "vaultId: Required; amount: Required" });
   });
 
   it("builds the deposit transaction and returns the XDR", async () => {
@@ -99,7 +99,7 @@ describe("POST /api/v1/tx/withdraw", () => {
     const res = makeRes();
     await withdrawHandler({ method: "POST", body: { walletAddress: PUBKEY, vaultId: "v" } }, res);
     expect(res.statusCode).toBe(400);
-    expect(res.body).toEqual({ error: "Missing required fields: shares" });
+    expect(res.body).toEqual({ error: "shares: Required" });
   });
 
   it("builds the withdraw transaction", async () => {
