@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { rpc } from "@stellar/stellar-sdk";
-import { toStroops, resolveProtocol, waitForTransaction } from "./tx";
+import { toStroops, resolveProtocol, waitForTransaction, simErrorMessage } from "./tx";
 
 const { SUCCESS, FAILED, NOT_FOUND } = rpc.Api.GetTransactionStatus;
 
@@ -26,6 +26,22 @@ function steppingClock(stepMs: number) {
   let t = 0;
   return () => (t += stepMs);
 }
+
+describe("simErrorMessage", () => {
+  it("returns just the first line of a multi-line diagnostic", () => {
+    const raw = "HostError: Error(Contract, #1)\n  at [0]: ...\n  at [1]: ...";
+    expect(simErrorMessage(raw)).toBe("HostError: Error(Contract, #1)");
+  });
+
+  it("trims surrounding whitespace", () => {
+    expect(simErrorMessage("  Error(WasmVm, InvalidAction)  ")).toBe("Error(WasmVm, InvalidAction)");
+  });
+
+  it("returns a fallback for empty or whitespace-only errors", () => {
+    expect(simErrorMessage("")).toBe("Simulation failed (no detail)");
+    expect(simErrorMessage("\n\n")).toBe("Simulation failed (no detail)");
+  });
+});
 
 describe("toStroops", () => {
   it("converts whole USDC amounts to 7-decimal stroops", () => {

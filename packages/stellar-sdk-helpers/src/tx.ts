@@ -84,7 +84,7 @@ export async function simulateView(
     .setTimeout(0)
     .build();
   const sim = await server.simulateTransaction(tx);
-  if (rpc.Api.isSimulationError(sim)) throw new Error(sim.error);
+  if (rpc.Api.isSimulationError(sim)) throw new Error(simErrorMessage(sim.error));
   if (!rpc.Api.isSimulationSuccess(sim) || !sim.result) return null;
   return scValToNative(sim.result.retval);
 }
@@ -102,7 +102,7 @@ export async function prepareSorobanTx(
     .setTimeout(300)
     .build();
   const sim = await server.simulateTransaction(tx);
-  if (rpc.Api.isSimulationError(sim)) throw new Error(`Simulation failed: ${sim.error}`);
+  if (rpc.Api.isSimulationError(sim)) throw new Error(`Simulation failed: ${simErrorMessage(sim.error)}`);
   const prepared = rpc.assembleTransaction(tx, sim).build();
   return { xdr: prepared.toEnvelope().toXDR("base64"), fee: sim.minResourceFee };
 }
@@ -192,6 +192,13 @@ export async function waitForTransaction(
     }
     await sleep(pollIntervalMs);
   }
+}
+
+// Soroban simulation errors can be multi-line diagnostics. The first line is
+// the actionable summary (e.g. "HostError: Error(Contract, #1)"); subsequent
+// lines are stack frames that belong in server logs, not user-facing messages.
+export function simErrorMessage(raw: string): string {
+  return raw.split("\n")[0].trim() || "Simulation failed (no detail)";
 }
 
 // Best-effort decode of the result code the RPC returns on a rejected submit
