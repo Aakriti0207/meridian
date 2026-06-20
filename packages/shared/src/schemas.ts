@@ -1,13 +1,20 @@
 import { z } from "zod";
 
+// Stellar G-address: starts with 'G', followed by 55 chars from the base32
+// alphabet (A-Z and 2-7), totalling 56 characters. This catches all malformed
+// addresses without requiring the full CRC16 checksum from the Stellar SDK.
+const stellarAddress = z
+  .string()
+  .regex(/^G[A-Z2-7]{55}$/, "Invalid Stellar public key");
+
 export const DepositRequestSchema = z.object({
-  walletAddress: z.string().length(56),
+  walletAddress: stellarAddress,
   vaultId: z.string(),
   amount: z.string().regex(/^\d+(\.\d{1,7})?$/),
 });
 
 export const WithdrawRequestSchema = z.object({
-  walletAddress: z.string().length(56),
+  walletAddress: stellarAddress,
   vaultId: z.string(),
   // Protocol share count to burn: bToken collateral for Blend, dfToken count
   // for DeFindex. Both come from `position.shares` in the frontend.
@@ -15,7 +22,7 @@ export const WithdrawRequestSchema = z.object({
 });
 
 export const TrustlineRequestSchema = z.object({
-  walletAddress: z.string().length(56),
+  walletAddress: stellarAddress,
 });
 
 export const SubmitRequestSchema = z.object({
