@@ -110,7 +110,7 @@ describe("checkRateLimit", () => {
   it("uses x-vercel-forwarded-for over x-forwarded-for when both are present", () => {
     const vercelIp = "5.6.7.8";
     const fwdIp = "9.9.9.9";
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < 100; i++) {
       checkRateLimit(
         fakeReq("POST", { "x-vercel-forwarded-for": vercelIp, "x-forwarded-for": fwdIp }),
         fakeRes()
