@@ -106,4 +106,30 @@ describe("checkRateLimit", () => {
     const resB = fakeRes();
     expect(checkRateLimit(fakeReq("POST", { "x-forwarded-for": ipB }), resB)).toBe(true);
   });
+
+  it("uses x-vercel-forwarded-for over x-forwarded-for when both are present", () => {
+    const vercelIp = "5.6.7.8";
+    const fwdIp = "9.9.9.9";
+    for (let i = 0; i < 100; i++) {
+      checkRateLimit(
+        fakeReq("POST", { "x-vercel-forwarded-for": vercelIp, "x-forwarded-for": fwdIp }),
+        fakeRes()
+      );
+    }
+    // vercelIp bucket is full — requests with that header should be blocked
+    const resBlocked = fakeRes();
+    expect(
+      checkRateLimit(
+        fakeReq("POST", { "x-vercel-forwarded-for": vercelIp, "x-forwarded-for": fwdIp }),
+        resBlocked
+      )
+    ).toBe(false);
+    expect(resBlocked.statusCode).toBe(429);
+
+    // fwdIp bucket is untouched — requests without x-vercel-forwarded-for should still pass
+    const resAllowed = fakeRes();
+    expect(
+      checkRateLimit(fakeReq("POST", { "x-forwarded-for": fwdIp }), resAllowed)
+    ).toBe(true);
+  });
 });
