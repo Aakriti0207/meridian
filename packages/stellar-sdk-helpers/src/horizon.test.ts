@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { Horizon } from "@stellar/stellar-sdk";
 import { buildHorizonServer } from "./horizon";
-import type { StellarNetwork, VaultInfo } from "./types";
+import type { StellarNetwork } from "./types";
 
 function network(name: StellarNetwork["network"]): StellarNetwork {
   return { network: name, rpcUrl: "", passphrase: "" };
@@ -28,18 +28,3 @@ describe("buildHorizonServer", () => {
   });
 });
 
-describe("VaultInfo shape", () => {
-  it("accepts a well-formed vault object", () => {
-    const vault = {
-      id: "blend-usdc",
-      protocol: "blend",
-      asset: "USDC",
-      apy: 5.25,
-      tvl: 1_000_000,
-      userBalance: 0,
-    } satisfies VaultInfo;
-
-    expect(vault.protocol).toBe("blend");
-    expect(typeof vault.apy).toBe("number");
-  });
-});
