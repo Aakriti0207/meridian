@@ -1,6 +1,7 @@
-import { describe, it, expect } from "vitest";
-import { rpc } from "@stellar/stellar-sdk";
-import { toStroops, resolveProtocol, waitForTransaction, simErrorMessage } from "./tx";
+import { describe, it, expect, vi, afterEach } from "vitest";
+import { rpc, Horizon } from "@stellar/stellar-sdk";
+import { toStroops, resolveProtocol, waitForTransaction, simErrorMessage, buildAddTrustlineTx } from "./tx";
+import type { StellarNetwork } from "./types";
 
 const { SUCCESS, FAILED, NOT_FOUND } = rpc.Api.GetTransactionStatus;
 
@@ -82,6 +83,48 @@ describe("resolveProtocol", () => {
   it("throws for vault ids with no protocol mapping", () => {
     expect(() => resolveProtocol("ondo-usdy")).toThrow(/No protocol mapping/);
     expect(() => resolveProtocol("")).toThrow(/No protocol mapping/);
+  });
+});
+
+const TESTNET: StellarNetwork = {
+  network: "testnet",
+  rpcUrl: "https://soroban-testnet.stellar.org",
+  passphrase: "Test SDF Network ; September 2015",
+};
+
+const USDC_ISSUER_TESTNET = "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5";
+const MUSDC_ISSUER_TESTNET = "GAZOB5KAE27U7QMGCJLA74TKGECONNND73GL2GIMYBXYNBVG4U5IHBX7";
+
+function makeBalance(code: string, issuer: string): Horizon.HorizonApi.BalanceLine {
+  return {
+    asset_type: code.length <= 4 ? "credit_alphanum4" : "credit_alphanum12",
+    asset_code: code,
+    asset_issuer: issuer,
+    balance: "0.0000000",
+    limit: "922337203685.4775807",
+    buying_liabilities: "0.0000000",
+    selling_liabilities: "0.0000000",
+    is_authorized: true,
+    is_authorized_to_maintain_liabilities: true,
+    last_modified_ledger: 1,
+    sponsor: undefined,
+  } as unknown as Horizon.HorizonApi.BalanceLine;
+}
+
+describe("buildAddTrustlineTx", () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it("throws when all required trustlines already exist", async () => {
+    vi.spyOn(Horizon.Server.prototype, "loadAccount").mockResolvedValue({
+      balances: [
+        makeBalance("USDC", USDC_ISSUER_TESTNET),
+        makeBalance("MUSDC", MUSDC_ISSUER_TESTNET),
+      ],
+    } as unknown as Awaited<ReturnType<Horizon.Server["loadAccount"]>>);
+
+    await expect(
+      buildAddTrustlineTx("GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5", TESTNET)
+    ).rejects.toThrow("All required trustlines already exist");
   });
 });
 
