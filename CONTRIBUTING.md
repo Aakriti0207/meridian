@@ -27,7 +27,7 @@ This document is the single source of truth for contributing. Please read it in 
 
 ## Code of Conduct
 
-Participation in this project is governed by the [Meridian Code of Conduct](CODE_OF_CONDUCT.md). By contributing, you agree to uphold it. Violations may be reported to <ezedikecollins@gmail.com>.
+Participation in this project is governed by the [Meridian Code of Conduct](CODE_OF_CONDUCT.md). By contributing, you agree to uphold it. Violations may be reported via [GitHub Discussions](https://github.com/drydocs/meridian/discussions) (select the Q&A category and mark it private if needed).
 
 ---
 
@@ -213,7 +213,7 @@ Use `good first issue` in place of a complexity label for tasks that are fully i
 
 **Do not open a public GitHub issue for security vulnerabilities.**
 
-Report security issues privately to <ezedikecollins@gmail.com> with:
+Report security issues via [GitHub's private vulnerability reporting](https://github.com/drydocs/meridian/security/advisories/new). Include:
 
 - A description of the vulnerability
 - Steps to reproduce
@@ -390,7 +390,7 @@ cargo test --all
 - **Dev setup broken?** Open a GitHub Discussion under the Q&A category.
 - **Found a bug not covered by an existing issue?** Open a new issue using the Bug Report template before starting any work.
 - **Have a feature idea?** Open a Discussion first. Do not open a PR for a feature that has not been discussed and approved.
-- **Security issue?** Email <ezedikecollins@gmail.com> -- do not open a public issue.
+- **Security issue?** Use [GitHub private vulnerability reporting](https://github.com/drydocs/meridian/security/advisories/new) -- do not open a public issue.
 
 ---
 
