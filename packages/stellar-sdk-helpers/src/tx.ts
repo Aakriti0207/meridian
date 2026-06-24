@@ -11,7 +11,7 @@ import {
 } from "@stellar/stellar-sdk";
 import type { StellarNetwork } from "./types";
 import { BASE_FEE, passphraseFor } from "./internal";
-import { withRetry } from "@meridian/shared";
+import { withRetry, withRaceTimeout } from "@meridian/shared";
 import { buildHorizonServer } from "./horizon";
 
 // The Soroban RPC SDK does not surface an AbortSignal option, so we race each
@@ -20,14 +20,8 @@ import { buildHorizonServer } from "./horizon";
 // the Vercel function-level deadline fires.
 const SOROBAN_RPC_TIMEOUT_MS = 10_000;
 
-function withSorobanTimeout<T>(fn: () => Promise<T>, ms = SOROBAN_RPC_TIMEOUT_MS): Promise<T> {
-  return Promise.race([
-    fn(),
-    new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error(`Soroban RPC timed out after ${ms}ms`)), ms)
-    ),
-  ]);
-}
+const withSorobanTimeout = <T>(fn: () => Promise<T>, ms = SOROBAN_RPC_TIMEOUT_MS) =>
+  withRaceTimeout(fn, ms, "Soroban RPC");
 
 const USDC_ISSUER: Record<string, string> = {
   testnet: "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
