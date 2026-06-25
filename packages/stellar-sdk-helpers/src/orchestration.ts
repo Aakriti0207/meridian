@@ -9,6 +9,7 @@ export interface ProtocolAddresses {
   usdc: string;
   eurc: string;
   defindexVault: string;
+  defindexVaultId: string;
 }
 
 /**
@@ -57,7 +58,7 @@ export async function resolvePositions(
   ]);
 
   if (addresses.defindexVault) {
-    const dfx = await fetchDefindexPosition(network, addresses.defindexVault, "defindex-usdc", publicKey);
+    const dfx = await fetchDefindexPosition(network, addresses.defindexVault, addresses.defindexVaultId, publicKey);
     positions.push(...dfx);
   }
 
