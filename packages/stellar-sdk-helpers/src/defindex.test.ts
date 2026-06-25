@@ -72,18 +72,19 @@ describe("fetchDefindexPosition", () => {
   const VAULT_ID = "CVAULT000000000000000000000000000000000000000000000000000";
   const PUBKEY = "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5";
 
-  beforeEach(() => vi.clearAllMocks());
-  afterEach(() => vi.restoreAllMocks());
-
-  it("constructs rpc.Server with an 8 s HTTP timeout", async () => {
-    vi.mocked(simulateView).mockResolvedValue(0n);
+  beforeEach(() => {
+    vi.clearAllMocks();
     capturedServerArgs.length = 0;
+  });
+
+  it("constructs rpc.Server with a 12 s HTTP timeout so the outer race fires first", async () => {
+    vi.mocked(simulateView).mockResolvedValue(0n);
 
     await fetchDefindexPosition(network, VAULT_ID, "defindex-usdc", PUBKEY);
 
     expect(capturedServerArgs).toHaveLength(1);
     expect(capturedServerArgs[0][0]).toBe(network.rpcUrl);
-    expect(capturedServerArgs[0][1]).toMatchObject({ timeout: 8_000 });
+    expect(capturedServerArgs[0][1]).toMatchObject({ timeout: 12_000 });
   });
 
   it("returns [] when the user holds zero shares", async () => {

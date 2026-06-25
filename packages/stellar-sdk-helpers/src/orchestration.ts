@@ -12,6 +12,12 @@ export interface ProtocolAddresses {
   defindexVaultId: string;
 }
 
+/**
+ * Build an unsigned deposit transaction for the vault identified by `vaultId`.
+ * Routes to Blend or DeFindex based on the vault ID prefix and returns the
+ * unsigned XDR and estimated fee. Throws if the vault protocol is unrecognised
+ * or the required contract address is not configured.
+ */
 export async function buildDepositTx(
   vaultId: string,
   walletAddress: string,
@@ -39,8 +45,7 @@ export async function buildDepositTx(
 
 /**
  * Fetches all positions for `publicKey` across Blend reserves and (optionally)
- * the DeFindex vault. The DeFindex call is isolated — a failure there is logged
- * and swallowed so the Blend positions are always returned.
+ * the DeFindex vault. Errors from either protocol propagate to the caller.
  */
 export async function resolvePositions(
   publicKey: string,
@@ -53,17 +58,19 @@ export async function resolvePositions(
   ]);
 
   if (addresses.defindexVault) {
-    try {
-      const dfx = await fetchDefindexPosition(network, addresses.defindexVault, addresses.defindexVaultId, publicKey);
-      positions.push(...dfx);
-    } catch (err) {
-      console.warn("[positions] defindex read failed:", err);
-    }
+    const dfx = await fetchDefindexPosition(network, addresses.defindexVault, addresses.defindexVaultId, publicKey);
+    positions.push(...dfx);
   }
 
   return positions;
 }
 
+/**
+ * Build an unsigned withdrawal transaction for the vault identified by `vaultId`.
+ * `shares` is the protocol share count to burn: bToken collateral for Blend,
+ * dfToken count for DeFindex. Routes and throws on the same conditions as
+ * `buildDepositTx`.
+ */
 export async function buildWithdrawTx(
   vaultId: string,
   walletAddress: string,
