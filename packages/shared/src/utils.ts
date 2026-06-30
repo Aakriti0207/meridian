@@ -67,8 +67,8 @@ export async function withRetry<T>(
   throw lastErr;
 }
 /**
- * Converts a stroops value to a decimal XLM string.
- * 1 XLM = 10,000,000 stroops.
+ * Converts a stroops value to a decimal string.
+ * 1 USDC = 10,000,000 stroops.
  */
 export function fromStroops(stroops: bigint): string {
   const negative = stroops < 0n;
